@@ -1,0 +1,62 @@
+1. Create Database & Tables
+Bashmysql -u root -p < schema/create_tables.sql
+2. Load Sample Data
+Bashmysql -u root -p < data/insert_data.sql
+3. Run Analytical Queries
+Bashmysql -u root -p foodgo < queries/queries.sql
+
+
+Database Schema Overview
+
+Table               Purpose                              KeyRelationships 
+customers           Platform users                       1 → N addresses, orders
+addresses           Saved delivery locations             N → 1 customer
+restaurants         Partner restaurants                  1 → N menu_items, orders
+menu_items          Dishes with price & availability     N → 1 restaurant
+orders              Customer orders                      Links customer, restaurant, address
+order_items         Items inside an order                Composite PK
+                    (M:N + price snapshot)                
+delivery_partners   Riders                               1 → N deliveries
+deliveries          Assignment & timing (≤1 per order)   1 → 1 order
+payments            Payment records (≤1 per order)       1 → 1 order
+reviews             Ratings & feedback (≤1 per order)    1 → 1 order
+
+
+Business Questions Answered
+
+#          Question                          SQL Concepts Used                 Type
+Q1         Most ordered food item            JOIN, SUM, GROUP BY              Core
+Q2         Restaurant with highest revenue   Multi-table JOIN, SUM, Ranking   Core
+Q3         Average order value               CTE, AVG                         Core
+Q4         Top customers by spend            Aggregation, LIMIT               Core
+Q5         Average delivery time             Time difference, AVG             Core
+Q6         High-rated restaurants            AVG, HAVING                      Core
+Q7         Cancelled orders analysis         COUNT, CASE                      Core
+Q8         Peak ordering hours               HOUR(), GROUP BY                 Extra
+Q9         Delivery partner performance      JOIN, AVG, Ranking               Extra
+Q10        Cuisine-wise revenue              Multi-level GROUP BY             Extra
+Q11        Customers ordering from multiple 
+           restaurants                       HAVING COUNT(DISTINCT …)         Extra
+Q12        Revenue lost due to 
+           cancellations                     Conditional aggregation          Extra
+
+
+Key Design Decisions
+
+1.Price Snapshot
+unit_price is stored in order_items so historical orders remain accurate even if menu prices change later.
+2.Controlled Status Values
+Order, delivery and payment statuses are restricted via CHECK constraints for data quality.
+3.At-most-one relationships
+An order can have at most one delivery, one payment and one review — enforced by UNIQUE constraints.
+4.No redundant totals
+Order total is always computed from order_items to avoid update anomalies.
+5.Cascading deletes
+Carefully chosen ON DELETE actions maintain referential integrity without accidental data loss.
+
+Assumptions
+One order belongs to exactly one restaurant.
+Menu item prices are snapshotted at the moment of ordering.
+An order may have zero or one delivery, payment and review.
+Cancelled orders retain payment records (to support refund tracking).
+Delivery time is measured from pickup_time to delivered_time.
