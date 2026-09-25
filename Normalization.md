@@ -6,6 +6,8 @@ The FoodGo database is designed to organize customer, restaurant, menu, order, d
 
 The normalization analysis checks the database up to Third Normal Form (3NF).
 
+---
+
 ## 2. Functional Dependencies
 
 ### Customers
@@ -44,11 +46,19 @@ The normalization analysis checks the database up to Third Normal Form (3NF).
 
 `order_id → customer_id, restaurant_id, address_id, order_time, status, total_amount`
 
-Since `address_id → customer_id`, the current design contains:
+Since:
+
+`address_id → customer_id`
+
+and:
+
+`order_id → address_id`
+
+there is a transitive dependency:
 
 `order_id → address_id → customer_id`
 
-This is reviewed as a transitive dependency during the 3NF analysis.
+This is identified as a normalization refinement in the current design.
 
 ### Order Items
 
@@ -82,6 +92,8 @@ This is reviewed as a transitive dependency during the 3NF analysis.
 
 `order_id` is UNIQUE, allowing at most one review per order.
 
+---
+
 ## 3. First Normal Form (1NF)
 
 FoodGo follows 1NF because:
@@ -92,6 +104,10 @@ FoodGo follows 1NF because:
 - Multiple addresses are stored as separate rows in `addresses`.
 - Multiple items in an order are stored as separate rows in `order_items`.
 
+Therefore, the relations satisfy First Normal Form.
+
+---
+
 ## 4. Second Normal Form (2NF)
 
 FoodGo first satisfies 1NF.
@@ -100,21 +116,25 @@ Most tables use a single-column primary key, so partial dependencies do not occu
 
 The important case is `order_items`.
 
-Primary key:
+**Primary Key:**
 
 `(order_id, item_id)`
 
-Functional dependency:
+**Functional Dependency:**
 
 `(order_id, item_id) → quantity, unit_price`
 
 Both non-key attributes depend on the complete composite key.
 
+There is no dependency of `quantity` or `unit_price` on only `order_id` or only `item_id`.
+
 Therefore, `order_items` satisfies 2NF.
+
+---
 
 ## 5. Third Normal Form (3NF)
 
-FoodGo separates major entities into individual tables:
+FoodGo separates major entities into individual relations:
 
 - Customer information → `customers`
 - Address information → `addresses`
@@ -125,58 +145,88 @@ FoodGo separates major entities into individual tables:
 - Payment information → `payments`
 - Review information → `reviews`
 
-The current `orders` table contains both `customer_id` and `address_id`.
+This separation reduces unnecessary duplication and keeps attributes with the entity they describe.
 
-Since:
+### Transitive Dependency
+
+In `addresses`:
 
 `address_id → customer_id`
 
-and:
+In `orders`:
 
 `order_id → address_id`
 
-there is a transitive dependency:
+Therefore:
 
 `order_id → address_id → customer_id`
 
-A normalized design can avoid storing `customer_id` redundantly in `orders` when the customer can be obtained through the selected address.
+This is a transitive dependency in the current `orders` design.
 
-## 6. Order Total
+A normalized refinement can avoid storing `customer_id` redundantly in `orders` when the customer can be obtained through the selected address.
+
+---
+
+## 6. Normalization Process Summary
+
+| Normal Form | FoodGo Analysis |
+|---|---|
+| 1NF | Atomic values, no repeating groups and uniquely identifiable rows |
+| 2NF | Partial dependencies are removed; `order_items` attributes depend on the complete composite key |
+| 3NF | Major entities are separated into appropriate tables; the transitive dependency involving `address_id` and `customer_id` in `orders` is identified |
+
+---
+
+## 7. Order Total
 
 The current `orders` table contains `total_amount`.
 
-The `order_items` table contains `quantity` and `unit_price`.
+The `order_items` table contains:
 
-The order total can be calculated using:
+- `quantity`
+- `unit_price`
+
+Therefore, the order total can be calculated using:
 
 `SUM(quantity × unit_price)`
 
-Therefore, `total_amount` is a derived value.
+`total_amount` is a derived value.
 
-The stored total should be handled consistently with `order_items` to prevent discrepancies.
+The stored total was validated against the calculated total using SQL validation queries.
 
-## 7. Price Snapshot
+The current FoodGo data showed no mismatch between the stored and calculated totals.
+
+---
+
+## 8. Price Snapshot
 
 `menu_items.price` represents the current menu price.
 
-`order_items.unit_price` represents the price at the time of the order.
+`order_items.unit_price` represents the price at the time the order was placed.
 
 This preserves historical order information when menu prices change.
 
-Therefore, `unit_price` is treated as a valid historical price snapshot.
+Therefore, `unit_price` is treated as a valid historical price snapshot rather than redundant data.
 
-## 8. Anomalies Reduced
+---
+
+## 9. Anomalies Reduced
 
 ### Update Anomaly
+
 Separating customer, restaurant, menu and delivery partner information reduces repeated data and makes updates easier.
 
 ### Insertion Anomaly
+
 Separate tables allow customers, restaurants, menu items and delivery partners to be added independently.
 
 ### Deletion Anomaly
-Separating entities prevents deleting one order from removing unrelated entity information.
 
-## 9. Integrity Constraints
+Separating entities prevents deleting one order from removing unrelated customer, restaurant or delivery partner information.
+
+---
+
+## 10. Integrity Constraints
 
 FoodGo uses:
 
@@ -187,26 +237,46 @@ FoodGo uses:
 - `CHECK`
 - `DEFAULT`
 
-The `order_items` table uses the composite primary key `(order_id, item_id)`.
+The `order_items` table uses the composite primary key:
+
+`(order_id, item_id)`
 
 The `deliveries`, `payments` and `reviews` tables use UNIQUE constraints on `order_id` to enforce the intended at-most-one relationship per order.
 
-## 10. Normalization Summary
+Referential actions such as `ON DELETE` and `ON UPDATE` are also used where appropriate.
 
-| Normal Form | FoodGo Analysis |
-|---|---|
-| 1NF | Atomic values, no repeating groups and uniquely identifiable rows |
-| 2NF | Non-key attributes depend on the complete key; `order_items` correctly uses its composite key |
-| 3NF | Major entities are separated into appropriate tables; the current `orders` design has a transitive dependency involving `address_id` and `customer_id` |
+---
 
-## 11. Conclusion
+## 11. Normalization Validation
+
+The normalization validation SQL checks the following:
+
+1. Duplicate order items
+2. Invalid customer references
+3. Address/customer consistency
+4. Orphan menu items
+5. Stored order totals against calculated totals
+6. Orphan deliveries
+7. Orphan payments
+8. Orphan reviews
+9. Duplicate deliveries
+10. Duplicate payments
+11. Duplicate reviews
+
+All 11 validation queries were executed on the FoodGo database.
+
+The validation queries returned zero rows for the current sample data, indicating that no violations were found by these checks.
+
+---
+
+## 12. Conclusion
 
 The FoodGo database has been analyzed using functional dependencies and the principles of 1NF, 2NF and 3NF.
 
 The design separates major entities into individual relations and uses a composite key for the many-to-many relationship between orders and menu items.
 
-The main normalization refinement identified in the current schema is the redundant `customer_id` stored together with `address_id` in `orders`.
+The main normalization refinement identified in the current schema is the transitive dependency involving `address_id` and `customer_id` in `orders`.
 
-The stored `total_amount` is also a derived value from `order_items` and should be handled consistently to prevent discrepancies.
+The stored `total_amount` is also a derived value from `order_items` and has been validated against the calculated total.
 
-These points provide the basis for the final normalization and SQL validation of the FoodGo database.
+The normalization validation queries provide additional checks for duplicate records, invalid references and consistency across related tables.
