@@ -37,12 +37,12 @@ FoodGo connects customers, restaurants, menus, orders, delivery partners, paymen
 
 ## Technology Stack
 
-| Layer              | Technology                          |
-|--------------------|-------------------------------------|
-| RDBMS              | MySQL 8.0+ / MariaDB 10.5+         |
-| Schema Design      | Crow’s Foot ER Diagram              |
-| Query Language     | Standard SQL (CTEs, Aggregations, Time functions) |
-| Tools              | MySQL Workbench / DBeaver / CLI     |
+| Layer              | Technology  |
+|--------------------|-------------|
+| RDBMS              | MySQL       |
+| Schema Design      |             |
+| Query Language     |             |
+| Tools              |             |
 
 ---
 
