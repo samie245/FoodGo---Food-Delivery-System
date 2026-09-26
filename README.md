@@ -147,7 +147,7 @@ CUSTOMERS:
 | email	            |       Customer email address   |
 
 ADDRESSES:
-Attribute              	Description
+| Attribute       |       	Description                |
 |-----------------|------------------------------------|
 | address_id	  |      Primary key                   |
 | customer_id	  | Foreign key referencing customers  |
@@ -157,68 +157,76 @@ Attribute              	Description
 | pincode	      |      Postal code                   |
 
 RESTAURENTS:
-Attribute              	Description
-restaurant_id          	Primary key
-name	                  Restaurant name
-cuisine	                Type of cuisine
-city	                  Restaurant location
-is_active              	Restaurant availability
+| Attribute         |   Description             |
+|-------------------|---------------------------|
+| restaurant_id     |   Primary key             |
+| name	            |   Restaurant name         |
+| cuisine	        |   Type of cuisine         |
+| city	            |   Restaurant location     |
+| is_active         |   Restaurant availability |
 
 menu_items:
-Attribute              	Description
-item_id	                Primary key
-restaurant_id	          Foreign key
-name	                  Food item name
-price                  	Item price
-is_veg	                Vegetarian/non-vegetarian indicator
+| Attribute       |       	Description                   |
+|-----------------|---------------------------------------|
+| item_id	      |   Primary key                         | 
+| restaurant_id	  |   Foreign key                         |
+| name	          |   Food item name                      |
+| price           |   Item price                          | 
+| is_veg	      |   Vegetarian/non-vegetarian indicator |
 
 orders:
-Attribute              	Description
-order_id	              Primary key
-customer_id	            Foreign key
-restaurant_id	          Foreign key
-address_id	            Foreign key
-order_time	            Time of order
-status	                Current order status
+| Attribute       |    Description       |
+|-----------------|----------------------|
+| order_id	      |    Primary key       |
+| customer_id	  |    Foreign key       |
+| restaurant_id	  |    Foreign key       |
+| address_id	  |    Foreign key       |
+| order_time	  |    Time of order     |
+| status	      | Current order status |
 
 order_items:
-Attribute	              Description
-order_id	              Foreign key
-item_id	                Foreign key
-quantity	              Number of items
-unit_price	            Price at the time of order
+| Attribute	     |     Description             |
+|----------------|-----------------------------|
+| order_id	     |   Foreign key               |
+| item_id	     |   Foreign key               |
+| quantity	     |  Number of items            |
+| unit_price	 | Price at the time of order  |
 order_items resolves the many-to-many relationship between orders and menu items.
 
 delivery_partners:
-Attribute	              Description
-partner_id            	Primary key
-name	                  Delivery partner name
-phone	                  Contact number
-vehicle_type	          Delivery vehicle
+| Attribute	    |      Description       |
+|---------------|------------------------|
+| partner_id    |   Primary key          |
+| name	        | Delivery partner name  |
+| phone	        |   Contact number       |
+| vehicle_type	|  Delivery vehicle      |
 
 deliveries:
-Attribute	              Description
-delivery_id            	Primary key
-order_id              	Foreign key
-partner_id             	Foreign key
-pickup_time            	Pickup timestamp
-delivered_time	        Delivery completion timestamp
+| Attribute	      |        Description             |
+|-----------------|--------------------------------|
+| delivery_id     |   Primary key                  |
+| order_id        |   Foreign key                  |
+| partner_id      |   Foreign key                  |
+| pickup_time     |   Pickup timestamp             |
+| delivered_time  |	Delivery completion timestamp  |
 
 payments
-Attribute	              Description
-payment_id            	Primary key
-order_id	              Foreign key
-amount	                Payment amount
-method	                Payment method
-status	                Payment status
+| Attribute	         Description
+|----------------|-------------------|
+| payment_id     |   Primary key     |
+| order_id	     |   Foreign key     |
+| amount	     |  Payment amount   |
+| method	     |   Payment method  |
+| status	     |   Payment status  |
 
 reviews:
-Attribute              	Description
-review_id	              Primary key
-order_id	              Foreign key
-restaurant_rating	      Restaurant rating
-delivery_rating	        Delivery rating
-comment	                Customer feedback
+| Attribute        |     Description     |
+|------------------|---------------------|
+| review_id	       |   Primary key       |
+| order_id	       |   Foreign key       |
+| restaurant_rating| Restaurant rating   |
+| delivery_rating  |  Delivery rating    |
+| comment	       |  Customer feedback  |
 
 Relationships
 The major relationships in FoodGo are:
@@ -242,18 +250,19 @@ CUSTOMER
 
 Database Schema Overview
 
-Table               Purpose                              KeyRelationships 
-customers           Platform users                       1 → N addresses, orders
-addresses           Saved delivery locations             N → 1 customer
-restaurants         Partner restaurants                  1 → N menu_items, orders
-menu_items          Dishes with price & availability     N → 1 restaurant
-orders              Customer orders                      Links customer, restaurant, address
-order_items         Items inside an order                Composite PK
-                    (M:N + price snapshot)                
-delivery_partners   Riders                               1 → N deliveries
-deliveries          Assignment & timing (≤1 per order)   1 → 1 order
-payments            Payment records (≤1 per order)       1 → 1 order
-reviews             Ratings & feedback (≤1 per order)    1 → 1 order
+| Table               Purpose                              Key Relationships
+|-------------------|------------------------------------|---------------------------------------|
+| customers         |  Platform users                    |   1 → N addresses, orders             |
+| addresses         |  Saved delivery locations          |   N → 1 customer                      |
+| restaurants       |  Partner restaurants               |   1 → N menu_items, orders            |
+| menu_items        |  Dishes with price & availability  |   N → 1 restaurant                    |
+| orders            |  Customer orders                   |   Links customer, restaurant, address |
+| order_items       |  Items inside an order             |   Composite PK                        |
+|                   |  (M:N + price snapshot)            |                                       |
+| delivery_partners |  Riders                            |   1 → N deliveries                    |
+| deliveries        |  Assignment & timing (≤1 per order)|   1 → 1 order                         |
+| payments          |  Payment records (≤1 per order)    |   1 → 1 order                         |
+| reviews           |  Ratings & feedback (≤1 per order) |   1 → 1 order                         |
 
 Database Concepts Demonstrated,
 
@@ -325,21 +334,22 @@ Delivery time is measured from pickup_time to delivered_time.
 
 Business Questions Answered
 
-#          Question                          SQL Concepts Used                Type
-Q1         Most ordered food item            JOIN, SUM, GROUP BY              Core
-Q2         Restaurant with highest revenue   Multi-table JOIN, SUM, Ranking   Core
-Q3         Average order value               CTE, AVG                         Core
-Q4         Top customers by spend            Aggregation, LIMIT               Core
-Q5         Average delivery time             Time difference, AVG             Core
-Q6         High-rated restaurants            AVG, HAVING                      Core
-Q7         Cancelled orders analysis         COUNT, CASE                      Core
-Q8         Peak ordering hours               HOUR(), GROUP BY                 Extra
-Q9         Delivery partner performance      JOIN, AVG, Ranking               Extra
-Q10        Cuisine-wise revenue              Multi-level GROUP BY             Extra
-Q11        Customers ordering from multiple 
-           restaurants                       HAVING COUNT(DISTINCT …)         Extra
-Q12        Revenue lost due to 
-           cancellations                     Conditional aggregation          Extra
+| #       |   Question                        |  SQL Concepts Used               | Type  | 
+|---------|-----------------------------------|----------------------------------|-------|
+| Q1      |   Most ordered food item          |  JOIN, SUM, GROUP BY             | Core  |
+| Q2      |   Restaurant with highest revenue |  Multi-table JOIN, SUM, Ranking  | Core  |
+| Q3      |   Average order value             |  CTE, AVG                        | Core  |
+| Q4      |   Top customers by spend          |  Aggregation, LIMIT              | Core  |
+| Q5      |   Average delivery time           |  Time difference, AVG            | Core  |
+| Q6      |   High-rated restaurants          |  AVG, HAVING                     | Core  |
+| Q7      |   Cancelled orders analysis       |  COUNT, CASE                     | Core  |
+| Q8      |   Peak ordering hours             |  HOUR(), GROUP BY                | Extra |
+| Q9      |   Delivery partner performance    |  JOIN, AVG, Ranking              | Extra |
+| Q10     |   Cuisine-wise revenue            |  Multi-level GROUP BY            | Extra |
+| Q11     |   Customers ordering from multiple|                                  |       |
+|         |   restaurants                     | HAVING COUNT(DISTINCT …)         | Extra |
+| Q12     |   Revenue lost due to             |                                  |       |
+|         |   cancellations                   | Conditional aggregation          | Extra |
 
 
 Key Design Decisions
