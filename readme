@@ -151,7 +151,7 @@ payment_id            	Primary key
 order_id	              Foreign key
 amount	                Payment amount
 method	                Payment method
-status	                Payment status
+status	                Payment status 
 
 reviews:
 Attribute              	Description
