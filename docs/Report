@@ -1,0 +1,32 @@
+FoodGo — DBMS Project Report and Evidence Workbook
+
+Team 5 • Database Management Systems — Project Report and Evidence Workbook
+FoodGo project cover artwork
+
+Project and Course Context
+This workbook documents the FoodGo relational database project submitted for the Database Management Systems course. It records the design, implementation, and verification of the FoodGo ordering platform database as supplied to Team 5.
+
+Abstract
+FoodGo is a food-ordering and delivery database application developed by Team 5 as a DBMS course project. It models customers, restaurant menus, delivery partners, orders, payments, and reviews in a relational MySQL schema, and answers twelve business questions through SQL analytics restricted to delivered orders. This report documents the supplied baseline schema, evaluates its normalization and integrity boundaries, and pairs every claim with reproducible evidence: a 347-row seed dataset, validation queries, and negative constraint tests.
+
+Objectives
+●	Design a relational schema for ordering, delivery, payment, and feedback workflows with enforced keys and constraints.
+●	Populate a realistic seed dataset and verify row counts and referential integrity.
+●	Demonstrate transactional order creation with ownership checks, price snapshots, and rollback on failure.
+●	Deliver twelve analytics queries under a delivered-only revenue policy, with evidence mapping.
+
+System Scope
+In scope: schema definition, seed loading, integrity testing, normalization analysis, transaction handling, and SQL analytics over the FoodGo dataset. Out of scope: application UI, payment-gateway integration, and real-time partner tracking — proposals in these areas appear only as recommendations.
+
+Implementation Architecture and Reproducible Run Sequence
+FoodGo runs as a single-schema MySQL deployment. One DDL script builds the schema; seed data and analytics layer on top in strict order, so any grader can rebuild the database from a clean repository clone. Each script has one owner and a fixed position in the run order; no file runs twice in a rebuild.
+
+Repository Structure and File Ownership
+Order	Artifact	Role in rebuild
+0	DROP + recreate	Destructive reset — see warning below
+1	01_create_schema.sql	Creates foodgo_db, nine tables, keys, constraints
+2	02_seed_data.sql	Inserts the 347-row baseline dataset
+3	03_integrity_checks.sql	Row counts, referential verification
+4	04_analytics_queries.sql	Business-question queries (delivered-only)
+
+
