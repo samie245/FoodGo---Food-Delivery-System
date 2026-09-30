@@ -1,235 +1,339 @@
-# FoodGo---Food-Delivery-System
-# FoodGo
-### Restaurant, Order & Delivery Management System
+FoodGo --- Restaurant, Order & Delivery Management System
 
-**Team 5 | DBMS Course Project**
+Team 5 | DBMS Course Project
 
-A clean, fully normalised relational database that powers a food delivery platform.  
-FoodGo connects customers, restaurants, menus, orders, delivery partners, payments and reviews into one coherent system — designed for correctness, analytical power and real-world practices.
+FoodGo is a MySQL-based relational database designed to model the core
+operations of a food-delivery platform. The system connects customers,
+delivery addresses, restaurants, menu items, orders, delivery partners,
+deliveries, payments and reviews in a structured relational model.
 
----
+The project focuses on ER modeling, relational schema design,
+functional dependencies, normalization, integrity constraints, realistic
+sample data and SQL-based business analysis.
 
-## Team Members
+Normalization note: The project includes a dedicated, read-only
+normalization.sql verification script. It demonstrates 1NF and 2NF,
+analyzes the dependencies relevant to 3NF, verifies lossless
+reconstruction, and checks price, total and cross-table consistency.
+Under the stated business dependency address_id → customer_id, the
+current physical orders table retains a transitive dependency, so
+the project does not claim that the entire current physical schema
+is strictly 3NF. The script documents this explicitly rather than
+silently changing the supplied schema.
 
-| S.No | Student Name              | USN         |
-|:----:|---------------------------|-------------|
-| 1    | Rehaan Saha               | AU25UG-046  |
-| 2    | S Thanmayee               | AU25UG-049  |
-| 3    | Samhita Bhuvanagiri       | AU25UG-050  |
-| 4    | Sarang Siva Thilakan      | AU25UG-054  |
-| 5    | Shahiba Arshiya Banu      | AU25UG-055  |
-| 6    | Supriya R                 | AU25UG-058  |
+Team Members
 
----
+S.No. Student Name           USN
 
-## Project Highlights
+    1 Rehaan Saha            AU25UG-046
+    2 S Thanmayee            AU25UG-049
+    3 Samhita Bhuvanagiri    AU25UG-050
+    4 Sarang Siva Thilakan   AU25UG-054
+    5 Shahiba Arshiya Banu   AU25UG-055
+    6 Supriya R              AU25UG-058
 
-- Fully normalised to **Third Normal Form (3NF)**
-- Industry-standard **price snapshot** in order items
-- Strong integrity constraints (`CHECK`, `UNIQUE`, referential actions)
-- Realistic order lifecycle with controlled status values
-- One-to-one relationships for Delivery, Payment and Review per order
-- Performance indexes on frequently queried columns
-- Rich, interconnected sample data (12 customers • 8 restaurants • 20+ orders)
-- 12 analytical queries covering all required business questions + extras
+1. Project Overview
 
----
+A food-delivery platform coordinates three major participants:
 
-## Technology Stack
+Customers place orders and maintain delivery addresses.
 
-| Layer              | Technology  |
-|--------------------|-------------|
-| RDBMS              | MySQL       |
-| Schema Design      |             |
-| Query Language     |             |
-| Tools              |             |
+Restaurants provide menus and prepare orders.
 
----
+Delivery Partners handle order delivery.
 
-## Repository Structure
+FoodGo brings these activities together in one relational database. It
+stores customer information, saved addresses, restaurants, menu items,
+orders, order-line details, delivery assignments, payments and reviews.
 
-```text
-FoodGo/
-├── README.md                       ← You are here
-├── schema/
-│   └── create_tables.sql           ← Complete DDL (tables, constraints, indexes)
-├── data/
-│   └── insert_data.sql             ← Realistic sample data
-├── queries/
-│   └── queries.sql                 ← Business questions + analytical queries
-├── diagrams/                       ← ER diagram & relational schema diagram
-└── docs/
-    └── Design_Rationale.md         ← Design decisions, normalisation & assumptions
+The database was designed from the project requirements and the
+suggested FoodGo database specification, then implemented using MySQL.
 
+2. Project Objectives
 
-Project Overview
-FoodGo is a relational database system designed to represent the core operations of a modern food-delivery platform.
-A food-delivery platform connects three major participants:
-Customers — browse restaurants and place orders
-Restaurants — manage menu items and prepare orders
-Delivery Partners — pick up and deliver orders
-FoodGo brings these activities together in a structured relational database, allowing information about customers, addresses, restaurants, menu items, orders, deliveries, payments, and reviews to be stored and managed efficiently.
-The project focuses on designing a well-structured, normalized database up to Third Normal Form (3NF) and using SQL to answer meaningful business questions.
+The main objectives are to:
 
-Objectives
-Design a real-world relational database.
-Identify entities, attributes, keys, and relationships.
-Create an ER diagram representing the system.
+Design a realistic relational database for a food-delivery system.
+
+Identify entities, attributes, keys and relationships.
+
+Create an ER diagram with cardinalities and participation
+information.
+
 Convert the ER model into relational tables.
-Apply primary keys and foreign keys.
-Maintain data integrity using appropriate constraints.
-Identify functional dependencies.
-Normalize the database up to 3NF.
-Insert realistic sample data.
-Write SQL queries for practical business analysis.
-Maintain the complete project in a GitHub repository.
 
-System Scope
-FoodGo supports the following core operations:
+Apply primary keys and foreign keys.
+
+Maintain data integrity using NOT NULL, UNIQUE, CHECK,
+DEFAULT and referential actions.
+
+Identify important functional dependencies.
+
+Demonstrate normalization through 1NF, 2NF and 3NF analysis.
+
+Insert realistic, referentially consistent sample data.
+
+Write SQL queries for practical business analysis.
+
+Verify important cross-table business rules.
+
+Maintain the complete project in a reproducible GitHub repository.
+
+3. System Scope
+
 Customer Management
-Store customer information.
-Maintain customer contact details.
-Manage saved delivery addresses.
+
+Store customer profiles.
+
+Maintain unique phone numbers and emails.
+
+Manage multiple saved delivery addresses.
 
 Restaurant Management
-Store restaurant details.
-Maintain restaurant cuisine information.
-Track restaurant availability.
-Manage restaurant menu items and prices.
+
+Store restaurant information.
+
+Maintain cuisine and city details.
+
+Track whether a restaurant is active.
+
+Store menu items and their current catalog prices.
 
 Order Management
-Create and store customer orders.
-Record items included in each order.
-Store item quantity and purchase price.
-Track order status.
-Handle cancelled orders.
+
+Record customer orders.
+
+Associate orders with restaurants and delivery addresses.
+
+Store order status and order time.
+
+Store the total amount.
+
+Record the individual items included in each order.
 
 Delivery Management
-Maintain delivery partner information.
+
+Maintain delivery partner details.
+
 Assign delivery partners to orders.
-Record pickup time.
-Record delivery completion time.
+
+Record pickup and delivery timestamps.
+
+Allow at most one delivery record per order.
 
 Payment Management
-Store payment details.
-Record payment amount.
-Track payment method and status.
+
+Store payment amount and method.
+
+Track payment status.
+
+Allow at most one payment record per order in the current schema.
 
 Review Management
-Store customer reviews.
-Record restaurant ratings.
-Record delivery ratings.
+
+Store restaurant and delivery ratings.
+
 Store customer comments.
-The project brief specifically defines these as the core functions of the database.
 
-Database Design
-The database is designed around the following major entities:
-Table          	           Purpose
-customers                	 Stores customer information
-addresses	                 Stores saved delivery addresses
-restaurants    	           Stores restaurant information
-menu_items	               Stores food items offered by restaurants
-orders	                   Stores customer orders
-order_items	               Stores items belonging to each order
-delivery_partners	         Stores delivery partner information
-deliveries	               Stores delivery assignments and timings
-payments	                 Stores payment information
-reviews	                   Stores customer ratings and reviews
-These tables are based on the tables suggested in the project specification.
+Allow at most one review record per order in the current schema.
 
-Key Attributes
-CUSTOMERS:
-| Attribute         |    	Description              |
-|-------------------|--------------------------------|
-| customer_id       |   	Primary key              |
-| name	            |       Customer name            |
-| phone	            |       Customer contact number  |
-| email	            |       Customer email address   |
+4. Technology Stack
 
-ADDRESSES:
-| Attribute       |       	Description                |
-|-----------------|------------------------------------|
-| address_id	  |      Primary key                   |
-| customer_id	  | Foreign key referencing customers  |
-| line 1	      |      Address line                  |
-| area	          |      Area/locality                 |
-| city	          |      City                          |
-| pincode	      |      Postal code                   |
+Layer            Technology
 
-RESTAURENTS:
-| Attribute         |   Description             |
-|-------------------|---------------------------|
-| restaurant_id     |   Primary key             |
-| name	            |   Restaurant name         |
-| cuisine	        |   Type of cuisine         |
-| city	            |   Restaurant location     |
-| is_active         |   Restaurant availability |
+RDBMS            MySQL 8.x
+Query Language   SQL
+Schema / DDL     MySQL DDL
+Data / DML       MySQL INSERT statements
+Design           ER Diagram / Relational Schema
+Documentation    Markdown
+Repository       GitHub
 
-menu_items:
-| Attribute       |       	Description                   |
-|-----------------|---------------------------------------|
-| item_id	      |   Primary key                         | 
-| restaurant_id	  |   Foreign key                         |
-| name	          |   Food item name                      |
-| price           |   Item price                          | 
-| is_veg	      |   Vegetarian/non-vegetarian indicator |
+5. Repository Structure
 
-orders:
-| Attribute       |    Description       |
-|-----------------|----------------------|
-| order_id	      |    Primary key       |
-| customer_id	  |    Foreign key       |
-| restaurant_id	  |    Foreign key       |
-| address_id	  |    Foreign key       |
-| order_time	  |    Time of order     |
-| status	      | Current order status |
+FoodGo/
+├── README.md
+│
+├── schema/
+│   └── create_tables.sql
+│       └── Database, tables, keys and constraints
+│
+├── data/
+│   └── insert_data.sql
+│       └── Realistic sample data
+│
+├── queries/
+│   └── queries.sql
+│       └── Business and analytical SQL queries
+│
+├── normalization/
+│   └── normalization.sql
+│       └── Read-only 1NF, 2NF, 3NF analysis and verification
+│
+├── diagrams/
+│   ├── ER_Diagram.png
+│   └── Relational_Schema.png
+│
+└── docs/
+    ├── Report.pdf
+    └── Design_Rationale.md
 
-order_items:
-| Attribute	     |     Description             |
-|----------------|-----------------------------|
-| order_id	     |   Foreign key               |
-| item_id	     |   Foreign key               |
-| quantity	     |  Number of items            |
-| unit_price	 | Price at the time of order  |
-order_items resolves the many-to-many relationship between orders and menu items.
+Rename the files/folders above to match the exact names in the
+repository if your GitHub folder names are different.
 
-delivery_partners:
-| Attribute	    |      Description       |
-|---------------|------------------------|
-| partner_id    |   Primary key          |
-| name	        | Delivery partner name  |
-| phone	        |   Contact number       |
-| vehicle_type	|  Delivery vehicle      |
+6. Database Design
 
-deliveries:
-| Attribute	      |        Description             |
-|-----------------|--------------------------------|
-| delivery_id     |   Primary key                  |
-| order_id        |   Foreign key                  |
-| partner_id      |   Foreign key                  |
-| pickup_time     |   Pickup timestamp             |
-| delivered_time  |	Delivery completion timestamp  |
+FoodGo contains the following 10 core tables:
+
+Table                 Purpose
+
+customers           Stores customer profiles and contact information
+addresses           Stores saved delivery addresses belonging to customers
+restaurants         Stores restaurant information
+menu_items          Stores dishes offered by restaurants
+delivery_partners   Stores delivery partner information
+orders              Stores order-level information
+order_items         Stores individual items within orders
+deliveries          Stores delivery assignment and timing
+payments            Stores payment information
+reviews             Stores restaurant/delivery ratings and comments
+
+7. Table Attributes and Keys
+
+customers
+
+Attribute       Description
+
+customer_id   Primary key
+name          Customer name
+phone         Unique contact number
+email         Unique email address
+
+Important constraints: customer_id is the primary key; phone and
+email have unique constraints.
+
+addresses
+
+Attribute       Description
+
+address_id    Primary key
+customer_id   Foreign key referencing customers
+line1         Address line
+area          Area/locality
+city          City
+pincode       Postal code
+
+Relationship: One customer can have many addresses.
+
+restaurants
+
+Attribute         Description
+
+restaurant_id   Primary key
+name            Restaurant name
+cuisine         Cuisine type
+city            Restaurant location
+is_active       Indicates whether the restaurant is active
+
+menu_items
+
+Attribute         Description
+
+item_id         Primary key
+restaurant_id   Foreign key referencing restaurants
+name            Food item name
+price           Current catalog price
+is_veg          Vegetarian/non-vegetarian indicator
+
+Relationship: One restaurant can offer many menu items.
+
+delivery_partners
+
+Attribute        Description
+
+partner_id     Primary key
+name           Delivery partner name
+phone          Unique contact number
+vehicle_type   Bike, scooter, bicycle or car
+
+orders
+
+Attribute         Description
+
+order_id        Primary key
+customer_id     Foreign key referencing customers
+restaurant_id   Foreign key referencing restaurants
+address_id      Foreign key referencing addresses
+order_time      Time when order was placed
+status          Order lifecycle status
+total_amount    Stored order total
+
+Allowed order statuses are:
+
+placed
+preparing
+out_for_delivery
+delivered
+cancelled
+
+order_items
+
+Attribute      Description
+
+order_id     Part of composite primary key; FK to orders
+item_id      Part of composite primary key; FK to menu_items
+quantity     Number of units ordered
+unit_price   Price captured for the item at order time
+
+The primary key is:
+
+PRIMARY KEY (order_id, item_id)
+
+This table resolves the many-to-many relationship between orders and
+menu items.
+
+deliveries
+
+Attribute          Description
+
+delivery_id      Primary key
+order_id         Unique foreign key to orders
+partner_id       Foreign key to delivery_partners
+pickup_time      Pickup timestamp
+delivered_time   Delivery completion timestamp
+
+The unique constraint on order_id means an order can have at most
+one delivery record.
 
 payments
-| Attribute	         Description
-|----------------|-------------------|
-| payment_id     |   Primary key     |
-| order_id	     |   Foreign key     |
-| amount	     |  Payment amount   |
-| method	     |   Payment method  |
-| status	     |   Payment status  |
 
-reviews:
-| Attribute        |     Description     |
-|------------------|---------------------|
-| review_id	       |   Primary key       |
-| order_id	       |   Foreign key       |
-| restaurant_rating| Restaurant rating   |
-| delivery_rating  |  Delivery rating    |
-| comment	       |  Customer feedback  |
+Attribute      Description
 
-Relationships
-The major relationships in FoodGo are:
+payment_id   Primary key
+order_id     Unique foreign key to orders
+amount       Payment amount
+method       Card, UPI, cash or netbanking
+status       Pending, completed, failed or refunded
+
+The current schema permits at most one payment record per order. The
+foreign key/unique constraint does not by itself force every order to
+have a payment record.
+
+reviews
+
+Attribute             Description
+
+review_id           Primary key
+order_id            Unique foreign key to orders
+restaurant_rating   Rating from 1 to 5
+delivery_rating     Rating from 1 to 5
+comment             Customer feedback
+
+The current schema permits at most one review per order.
+
+8. Relationships
+
+The major relationships are:
 
 CUSTOMER
    │
@@ -239,128 +343,669 @@ CUSTOMER
               │
               ├──────< ORDER_ITEM >────── MENU_ITEM
               │                              │
-              │                              │
-              │                         RESTAURANT
-              │
-              ├──────── PAYMENT
+              │                              └────── RESTAURANT
               │
               ├──────── DELIVERY >──────── DELIVERY_PARTNER
               │
+              ├──────── PAYMENT
+              │
               └──────── REVIEW
 
-Database Schema Overview
+Cardinalities
 
-| Table               Purpose                              Key Relationships
-|-------------------|------------------------------------|---------------------------------------|
-| customers         |  Platform users                    |   1 → N addresses, orders             |
-| addresses         |  Saved delivery locations          |   N → 1 customer                      |
-| restaurants       |  Partner restaurants               |   1 → N menu_items, orders            |
-| menu_items        |  Dishes with price & availability  |   N → 1 restaurant                    |
-| orders            |  Customer orders                   |   Links customer, restaurant, address |
-| order_items       |  Items inside an order             |   Composite PK                        |
-|                   |  (M:N + price snapshot)            |                                       |
-| delivery_partners |  Riders                            |   1 → N deliveries                    |
-| deliveries        |  Assignment & timing (≤1 per order)|   1 → 1 order                         |
-| payments          |  Payment records (≤1 per order)    |   1 → 1 order                         |
-| reviews           |  Ratings & feedback (≤1 per order) |   1 → 1 order                         |
+Relationship                  Cardinality
 
-Database Concepts Demonstrated,
+Customer → Address            1 : N
+Customer → Order              1 : N
+Restaurant → Menu Item        1 : N
+Order ↔ Menu Item             M : N through order_items
+Restaurant → Order            1 : N
+Order → Delivery              0 : 1 in the current schema
+Delivery Partner → Delivery   1 : N
+Order → Payment               0 : 1 in the current schema
+Order → Review                0 : 1 in the current schema
 
-Entity–Relationship modeling
-Relational schema design
-Primary keys
-Foreign keys
-Candidate keys
-Composite keys
-Referential integrity
-Functional dependencies
-Normalization
-First Normal Form (1NF)
-Second Normal Form (2NF)
-Third Normal Form (3NF)
-Data integrity constraints
-SQL DDL
-SQL DML
-SQL joins
-Aggregation
-Grouping
-Filtering
-Subqueries / CTEs
-Date and time functions
+9. Normalization
 
-Normalization
-The database is designed with the objective of achieving Third Normal Form (3NF).
-1NF — First Normal Form
-The database ensures that:
-Each column contains atomic values.
-There are no repeating groups.
-Each record can be uniquely identified.
-2NF — Second Normal Form
-The design ensures:
-The database is already in 1NF.
-Non-key attributes depend on the complete primary key.
-Partial dependencies are eliminated.
-This is particularly relevant to the order_items table because it represents the relationship between orders and menu items.
-3NF — Third Normal Form
-The design ensures:
-The database is already in 2NF.
-Non-key attributes do not depend on other non-key attributes.
-Data is stored in appropriate tables according to its dependency.
-Normalization reduces unnecessary duplication and improves consistency.
+Normalization is the process of organizing relational data to reduce
+unnecessary duplication and avoid update, insertion and deletion
+anomalies.
 
-Integrity Constraints
-The database uses appropriate constraints to maintain data accuracy and consistency.
-Expected constraints include:
-PRIMARY KEY
-FOREIGN KEY
-NOT NULL
+FoodGo includes a separate normalization.sql script that performs
+read-only demonstrations and verification.
+
+It does not use:
+
+CREATE
+ALTER
+DROP
+INSERT
+UPDATE
+DELETE
+
+The script therefore does not modify the supplied database.
+
+9.1 Unnormalized Form --- UNF
+
+A conceptual unnormalized order could look like:
+
+Order
+├── order_id
+├── customer
+├── restaurant
+└── items
+      ├── Item 1
+      ├── Item 2
+      └── Item 3
+
+The problem is the repeating group of items.
+
+The project does not create this as a physical table; it is used only to
+explain the starting normalization problem.
+
+9.2 First Normal Form --- 1NF
+
+A relation is in 1NF when attributes contain atomic values and repeating
+groups are removed.
+
+FoodGo demonstrates this through the order-line query in
+normalization.sql.
+
+Instead of:
+
+Order 2 → [Penne Alfredo, Grilled Salmon Steak]
+
+the order items appear as separate rows:
+
+Order 2 | Item 74 | Penne Alfredo
+Order 2 | Item 77 | Grilled Salmon Steak
+
+Therefore:
+
+One item = one row
+
+The order_items table uses:
+
+PRIMARY KEY (order_id, item_id)
+
+to uniquely identify an order-item combination.
+
+9.3 Second Normal Form --- 2NF
+
+2NF requires:
+
+The relation is already in 1NF.
+
+Non-key attributes depend on the whole key, not only part of a
+composite key.
+
+This is particularly relevant to order_items.
+
+Its composite key is:
+
+(order_id, item_id)
+
+and the dependency is:
+
+(order_id, item_id)
+        ↓
+ quantity
+ unit_price
+
+The normalization script demonstrates this by separating:
+
+order-level facts,
+
+menu-item facts,
+
+order-item facts.
+
+This avoids storing order-level information repeatedly on every item
+row.
+
+9.4 Third Normal Form --- 3NF Analysis
+
+For the independent relations, the important dependencies include:
+
+customer_id → name, phone, email
+
+address_id → customer_id, line1, area, city, pincode
+
+restaurant_id → name, cuisine, city, is_active
+
+item_id → restaurant_id, name, price, is_veg
+
+partner_id → name, phone, vehicle_type
+
+(order_id, item_id) → quantity, unit_price
+
+The normalization script also analyzes:
+
+order_id → customer_id, restaurant_id, address_id,
+           order_time, status, total_amount
+
+Important orders dependency
+
+Under the project's stated business rule:
+
+address_id → customer_id
+
+because an address belongs to one customer.
+
+Therefore:
+
+order_id
+   ↓
+address_id
+   ↓
+customer_id
+
+This is a transitive dependency.
+
+Because of this, the current physical orders table is not strict 3NF
+under that stated dependency.
+
+The project deliberately does not hide this issue. The normalization
+script:
+
+demonstrates the 3NF projection,
+
+separates address and customer facts conceptually,
+
+checks reconstruction,
+
+verifies that the current data has no observed ownership mismatch,
+
+preserves the original physical schema.
+
+A possible future redesign could omit orders.customer_id and derive
+the customer through addresses, but that would require reviewing
+existing queries, application logic and business rules.
+
+9.5 Lossless Reconstruction
+
+Query N14 checks whether the order information can be reconstructed
+after projecting out customer_id.
+
+Conceptually:
+
+Original Orders
+      │
+      ├── Order facts
+      │
+      └── Address
+             │
+             └── Customer
+                    ↓
+             Reconstructed Order
+
+The verification compares:
+
+original order count,
+
+reconstructed order count,
+
+reconstructed header values.
+
+The expected result is:
+
+original_orders       = 40
+reconstructed_orders  = 40
+mismatched_headers    = 0
+
+This demonstrates lossless reconstruction for the tested data.
+
+9.6 Price Snapshot
+
+menu_items.price represents the current catalog price.
+
+order_items.unit_price represents the historical price captured when
+the order was placed.
+
+Example:
+
+Current menu price       = ₹350
+Historical order price   = ₹299
+
+The order must retain ₹299 even if the restaurant later changes the
+catalog price to ₹350.
+
+Therefore unit_price is intentionally stored in order_items.
+
+9.7 Total Verification
+
+The normalization script compares:
+
+Stored total
+      vs
+SUM(quantity × unit_price)
+
+For example:
+
+Penne Alfredo:
+3 × 299 = 897
+
+Grilled Salmon Steak:
+2 × 449 = 898
+
+Total:
+897 + 898 = 1795
+
+The verification query checks whether the stored order total matches the
+calculated total.
+
+10. Integrity Constraints
+
+FoodGo uses:
+
+Primary Keys
+
+Uniquely identify records.
+
+Examples:
+
+customer_id
+restaurant_id
+order_id
+item_id
+
+Composite Primary Key
+
+(order_id, item_id)
+
+in order_items.
+
+Foreign Keys
+
+Maintain relationships between tables.
+
+Examples:
+
+orders.customer_id → customers.customer_id
+
+orders.restaurant_id → restaurants.restaurant_id
+
+order_items.order_id → orders.order_id
+
+order_items.item_id → menu_items.item_id
+
 UNIQUE
+
+Used for values that must not repeat.
+
+Examples:
+
+customers.phone
+customers.email
+delivery_partners.phone
+deliveries.order_id
+payments.order_id
+reviews.order_id
+
+NOT NULL
+
+Used where a value is required.
+
 CHECK
+
+Examples:
+
+menu_items.price > 0
+order_items.quantity > 0
+order_items.unit_price > 0
+ratings between 1 and 5
+
 DEFAULT
 
-Referential actions such as:
-ON DELETE
-ON UPDATE
-may also be applied where appropriate.
-These constraints are part of the project's required database implementation.
+Examples include:
 
+order_time = CURRENT_TIMESTAMP
+status = 'placed'
 
-Assumptions
-One order belongs to exactly one restaurant.
-Menu item prices are snapshotted at the moment of ordering.
-An order may have zero or one delivery, payment and review.
-Cancelled orders retain payment records (to support refund tracking).
-Delivery time is measured from pickup_time to delivered_time.
+Referential Actions
 
-Business Questions Answered
+The schema uses appropriate ON DELETE and ON UPDATE actions such as:
 
-| #       |   Question                        |  SQL Concepts Used               | Type  | 
-|---------|-----------------------------------|----------------------------------|-------|
-| Q1      |   Most ordered food item          |  JOIN, SUM, GROUP BY             | Core  |
-| Q2      |   Restaurant with highest revenue |  Multi-table JOIN, SUM, Ranking  | Core  |
-| Q3      |   Average order value             |  CTE, AVG                        | Core  |
-| Q4      |   Top customers by spend          |  Aggregation, LIMIT              | Core  |
-| Q5      |   Average delivery time           |  Time difference, AVG            | Core  |
-| Q6      |   High-rated restaurants          |  AVG, HAVING                     | Core  |
-| Q7      |   Cancelled orders analysis       |  COUNT, CASE                     | Core  |
-| Q8      |   Peak ordering hours             |  HOUR(), GROUP BY                | Extra |
-| Q9      |   Delivery partner performance    |  JOIN, AVG, Ranking              | Extra |
-| Q10     |   Cuisine-wise revenue            |  Multi-level GROUP BY            | Extra |
-| Q11     |   Customers ordering from multiple|                                  |       |
-|         |   restaurants                     | HAVING COUNT(DISTINCT …)         | Extra |
-| Q12     |   Revenue lost due to             |                                  |       |
-|         |   cancellations                   | Conditional aggregation          | Extra |
+CASCADE
+RESTRICT
 
+to maintain referential integrity.
 
-Key Design Decisions
+11. Sample Data
 
-1.Price Snapshot
-unit_price is stored in order_items so historical orders remain accurate even if menu prices change later.
-2.Controlled Status Values
-Order, delivery and payment statuses are restricted via CHECK constraints for data quality.
-3.At-most-one relationships
-An order can have at most one delivery, one payment and one review — enforced by UNIQUE constraints.
-4.No redundant totals
-Order total is always computed from order_items to avoid update anomalies.
-5.Cascading deletes
-Carefully chosen ON DELETE actions maintain referential integrity without accidental data loss.
+The sample-data script contains realistic FoodGo data covering:
+
+Customers
+
+Addresses
+
+Restaurants
+
+Menu items
+
+Delivery partners
+
+Orders
+
+Order items
+
+Deliveries
+
+Payments
+
+Reviews
+
+The current sample-data source documents 347 total records across the
+10 tables.
+
+The data is designed to be referentially consistent and sufficient to
+produce meaningful query results.
+
+Record counts can depend on the database snapshot used for execution.
+The normalization report and sample-data script should therefore be
+treated as execution-specific evidence rather than assumed to describe
+every future database state.
+
+12. Normalization Verification Queries
+
+The normalization.sql file contains the following analysis stages:
+
+Query   Purpose
+
+N01     Verify database environment
+N02     List existing base tables
+N03     Inspect primary and unique constraints
+N04     Demonstrate 1NF order-line representation
+N05     Display order-level facts for 2NF
+N06     Display menu-item facts for 2NF
+N07     Demonstrate complete composite-key dependency
+N08     Verify address ownership for a selected order
+N09     Check address ownership across all orders
+N10     Show the 3NF order projection
+N11     Show address facts
+N12     Show customer facts
+N13     Show restaurant facts
+N14     Verify lossless reconstruction
+N15     Compare current and historical prices
+N16     Compare stored and calculated total
+N17     Verify totals across all orders
+N18     Check order/menu-item restaurant consistency
+N19     Show final database inventory
+
+13. Business Questions
+
+The project addresses the core questions from the DBMS project
+specification and additional domain questions.
+
+                        \# Business Question     SQL Concepts
+
+                        Q1 What is the most      `JOIN`, `SUM`,
+                           ordered food item?    `GROUP BY`
+
+                        Q2 Which restaurant has  Multi-table `JOIN`,
+                           the highest revenue?  `SUM`, ranking
+
+                        Q3 What is the average   CTE/subquery, `AVG`
+                           order value?          
+
+                        Q4 Who are the top       Aggregation, `LIMIT`
+                           customers by          
+                           spending?             
+
+                        Q5 What is the average   Time-difference
+                           delivery time?        functions, `AVG`
+
+                        Q6 Which restaurants     `AVG`, `HAVING`
+                           have high ratings?    
+
+                        Q7 How many orders were  `COUNT`, `CASE`,
+                           cancelled?            filtering
+
+                        Q8 What are the peak     `HOUR()`, `GROUP BY`
+                           ordering hours?       
+
+                        Q9 How does              `JOIN`, `AVG`,
+                           delivery-partner      aggregation/ranking
+                           performance compare?  
+
+                       Q10 What is the revenue   Multi-level `GROUP BY`
+                           by cuisine?           
+
+                       Q11 Which customers order `COUNT(DISTINCT ...)`,
+                           from multiple         `HAVING`
+                           restaurants?          
+
+                       Q12 What revenue is       Conditional aggregation
+                           associated with       
+                           cancelled orders?     
+
+14. Key Design Decisions
+
+1. Price Snapshot
+
+order_items.unit_price is stored separately from menu_items.price.
+
+Reason:
+
+menu_items.price
+    = current catalog price
+
+order_items.unit_price
+    = price recorded for that historical order
+
+This preserves historical order accuracy.
+
+2. Composite Key in order_items
+
+PRIMARY KEY (order_id, item_id)
+
+An item can appear in many orders and an order can contain many items.
+
+The composite key uniquely identifies each order-item combination.
+
+3. At-Most-One Delivery, Payment and Review
+
+Unique constraints on order_id in:
+
+deliveries
+payments
+reviews
+
+ensure that an order cannot have multiple rows in each of those tables.
+
+The current physical schema enforces at most one, not necessarily
+exactly one.
+
+4. Stored total_amount
+
+The orders table stores total_amount.
+
+The normalization verification script separately calculates:
+
+SUM(quantity × unit_price)
+
+and compares it with the stored total.
+
+This provides a direct consistency check against update/calculation
+errors.
+
+5. Referential Integrity
+
+Foreign keys and referential actions are used to prevent orphaned
+records and maintain relationships between entities.
+
+6. Read-Only Normalization Verification
+
+The normalization script does not alter the existing database.
+
+This was intentional because the objective is to demonstrate and
+verify normalization against the supplied schema and data, while
+preserving the project database.
+
+15. SQL Concepts Demonstrated
+
+The project demonstrates:
+
+DDL
+
+DML
+
+SELECT
+
+WHERE
+
+ORDER BY
+
+GROUP BY
+
+HAVING
+
+JOIN
+
+LEFT JOIN
+
+EXISTS
+
+Subqueries
+
+CTEs
+
+Aggregate functions
+
+SUM()
+
+COUNT()
+
+AVG()
+
+CASE
+
+UNION ALL
+
+Date/time functions
+
+Primary keys
+
+Foreign keys
+
+Unique constraints
+
+Composite keys
+
+Check constraints
+
+Default values
+
+Referential integrity
+
+Functional dependencies
+
+1NF
+
+2NF
+
+3NF analysis
+
+Lossless reconstruction
+
+16. How to Run the Project
+
+Step 1 --- Create the database
+
+Run:
+
+SOURCE schema/create_tables.sql;
+
+This creates the foodgo database and its tables.
+
+Step 2 --- Insert sample data
+
+Run:
+
+SOURCE data/insert_data.sql;
+
+This populates the tables with sample data.
+
+Step 3 --- Run business queries
+
+Run:
+
+SOURCE queries/queries.sql;
+
+This executes the business-analysis queries.
+
+Step 4 --- Run normalization verification
+
+Run:
+
+SOURCE normalization/normalization.sql;
+
+This executes the read-only normalization and consistency checks.
+
+Step 5 --- Verify the database
+
+You can check the tables using:
+
+USE foodgo;
+SHOW TABLES;
+
+17. Project Workflow
+
+The overall project follows:
+
+Requirements
+     ↓
+ER Diagram
+     ↓
+Relational Schema
+     ↓
+Primary & Foreign Keys
+     ↓
+Integrity Constraints
+     ↓
+Sample Data
+     ↓
+Normalization Analysis
+     ↓
+Business SQL Queries
+     ↓
+Verification
+     ↓
+Documentation
+
+18. Conclusion
+
+FoodGo demonstrates how a real-world food-delivery system can be
+represented using a relational database.
+
+The project covers the complete DBMS workflow:
+
+Conceptual Design
+      ↓
+Logical Design
+      ↓
+Physical Implementation
+      ↓
+Data Population
+      ↓
+Normalization Analysis
+      ↓
+SQL Analysis
+      ↓
+Integrity Verification
+
+The database provides structured relationships between customers,
+addresses, restaurants, menu items, orders, order items, delivery
+partners, deliveries, payments and reviews.
+
+The dedicated normalization analysis makes the project's assumptions and
+functional dependencies explicit. It demonstrates 1NF and 2NF, evaluates
+the 3NF condition of the current schema, verifies lossless
+reconstruction and performs additional consistency checks without
+modifying the database.
+
+Team 5 --- FoodGo
+
+Restaurant, Order & Delivery Management System
+
+DBMS Course Project
