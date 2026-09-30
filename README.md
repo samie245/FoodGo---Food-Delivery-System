@@ -267,6 +267,14 @@ comment             Customer feedback
 
 The current schema permits at most one review per order.
 
+createtables:
+In version 2 of our create_tables.sql file, we made some improvements without removing any existing functionality. The file increased from 198 lines to 284 lines.
+First, we added three CHECK constraints to validate the format of important fields — customer phone numbers must contain 10 digits, address pincodes must contain 6 digits, and delivery partner phone numbers must contain 10 digits.
+Next, we added two indexes on the orders table: one for order status and another for order time. These help improve the efficiency of queries that frequently search or sort orders using these columns.
+We also added three triggers for the order_items table. These triggers automatically recalculate the order's total_amount whenever an order item is inserted, updated, or deleted. Before creating each trigger, we use DROP TRIGGER IF EXISTS so that the script can be safely executed again.
+Finally, we added a changelog to document the modifications. The existing unique constraints were not removed; we only added trailing commas so the new CHECK constraints could follow them.
+The important point is that these changes are backward-compatible. Our teammates' insert_tables.sql, queries.sql, and normalization_validation.sql files continue to work without modification and produce the same results. They only need to pull the updated create_tables.sql when rebuilding the database from scratch.
+
 8. Relationships
 The major relationships are:
 
