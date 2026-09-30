@@ -1,9 +1,7 @@
 -- ============================================================
--- FoodGo: Normalization Demonstration and Verification
 -- File: normalization.sql
---
 -- Database: foodgo
--- Normalization analysis: Supriya
+-- Normalization analysis by: Supriya
 --
 -- PURPOSE
 -- Explain 1NF, 2NF and 3NF using the existing FoodGo tables.
@@ -27,7 +25,7 @@ USE foodgo;
 
 -- ============================================================
 -- N01. ENVIRONMENT
--- 
+-- Before we start our normalization checks, let's confirm that we're working in the correct database and know the current MySQL settings.
 -- ============================================================
 
 SELECT
@@ -38,8 +36,8 @@ SELECT
 
 -- ============================================================
 -- N02. EXISTING BASE TABLES
+-- Show all tables in FoodGo 
 -- Expected: 10 rows, one per original table.
--- 
 -- ============================================================
 
 SELECT
@@ -51,7 +49,8 @@ ORDER BY TABLE_NAME;
 
 -- ============================================================
 -- N03. PRIMARY AND UNIQUE KEYS
---
+-- Display all primary and unique keys in the FoodGo tables
+-- 
 -- A candidate key is a minimal, mandatory unique identifier.
 --
 -- customers:
@@ -118,12 +117,12 @@ ORDER BY
 
 -- ============================================================
 -- N04. FIRST NORMAL FORM: ONE ROW PER ORDERED ITEM
---
+--Take Order 2, collect its customer, restaurant and item information from the different tables, and show each ordered item as a separate row. This demonstrates the 1NF idea.”
 -- Example: existing order 2.
 --
 -- This reconstructed flat relation has:
 --   one item per row;
---   scalar values;
+--   atomic values;
 --   a row identifier of (order_id, item_id).
 --
 -- It illustrates 1NF, but contains partial dependencies:
@@ -208,7 +207,7 @@ WHERE order_id = 2;
 -- duplicating menu rows.
 --
 -- Expected: item IDs 74 and 77.
--- Screenshot: N06_2nf_menu_items.png
+-- 
 -- ============================================================
 
 SELECT
@@ -243,7 +242,7 @@ ORDER BY mi.item_id;
 --   order 2, item 74, quantity 3, unit_price 299.00
 --   order 2, item 77, quantity 2, unit_price 449.00
 --
--- Screenshot: N07_2nf_order_items.png
+--
 -- ============================================================
 
 SELECT
@@ -799,5 +798,5 @@ FROM row_counts;
 -- immutable. Existing queries and application code would then
 -- require review and testing.
 --
--- END OF SCRIPT
+-- END 
 -- ============================================================
