@@ -8,12 +8,12 @@
 -- v1 - Initial schema: 10 tables, all PK/FK relationships,
 --      base CHECK constraints (price > 0, quantity > 0, ratings
 --      1-5, total_amount >= 0).
--- v2 - Added by Samhita:
+-- v2 - Extra features added by Samhita:
 --      1. Format CHECK constraints on customers.phone,
 --         delivery_partners.phone (10 digits) and
---         addresses.pincode (6 digits) -- tightens Integrity
+--         addresses.pincode (6 digits) --> tightens Integrity
 --         Constraints beyond FK/range checks.
---      2. Indexes on orders.status and orders.order_time --
+--      2. Indexes on orders.status and orders.order_time -->
 --         these columns are filtered/grouped heavily by the
 --         business-question queries (cancellation rate, peak
 --         ordering hours, status-based revenue) but weren't
@@ -29,8 +29,7 @@
 --         order was placed.
 --      Verified against the team's existing insert_tables.sql,
 --      queries.sql and normalization_validation.sql -- all run
---      unmodified with identical results, no changes required
---      on anyone else's file.
+--      unmodified with identical results.
 -- ============================================================
 
 DROP DATABASE IF EXISTS foodgo;
