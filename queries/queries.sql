@@ -193,3 +193,13 @@ FROM reviews
 WHERE restaurant_rating IS NOT NULL 
   AND delivery_rating IS NOT NULL;       -- Filters out incomplete reviews to ensure a fair comparison
 
+-- ------------------------------------------------------------
+-- Q15 [Extra]: Which delivery vehicle type handles the most orders?
+-- ------------------------------------------------------------
+SELECT 
+    dp.vehicle_type,                     -- Type of vehicle used by partners (bike, scooter, etc.)
+    COUNT(d.delivery_id) AS total_deliveries -- Counts total deliveries completed by each vehicle type
+FROM delivery_partners dp
+JOIN deliveries d ON dp.partner_id = d.partner_id
+GROUP BY dp.vehicle_type                 -- Groups delivery counts by vehicle category
+ORDER BY total_deliveries DESC;          -- Sorts from highest volume vehicle type down
