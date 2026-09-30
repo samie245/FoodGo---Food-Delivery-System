@@ -182,3 +182,14 @@ SELECT
 FROM payments
 GROUP BY method                          -- Groups the counts and sums by payment method
 ORDER BY total_transactions DESC;        -- Sorts from most frequently used to least used
+
+-- ------------------------------------------------------------
+-- Q14 [Extra]: How do average restaurant ratings compare to delivery ratings?
+-- ------------------------------------------------------------
+SELECT 
+    ROUND(AVG(restaurant_rating), 2) AS overall_avg_restaurant_score, -- Platform-wide average score for restaurants/food
+    ROUND(AVG(delivery_rating), 2) AS overall_avg_delivery_score     -- Platform-wide average score for delivery service
+FROM reviews
+WHERE restaurant_rating IS NOT NULL 
+  AND delivery_rating IS NOT NULL;       -- Filters out incomplete reviews to ensure a fair comparison
+
