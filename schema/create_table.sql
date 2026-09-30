@@ -23,7 +23,8 @@ CREATE TABLE customers (
     phone           VARCHAR(15)  NOT NULL,
     email           VARCHAR(100),
     CONSTRAINT uq_customers_phone UNIQUE (phone),
-    CONSTRAINT uq_customers_email UNIQUE (email)
+    CONSTRAINT uq_customers_email UNIQUE (email),
+    CONSTRAINT chk_customers_phone_format CHECK (phone REGEXP '^[0-9]{10}$')
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------
@@ -36,6 +37,7 @@ CREATE TABLE addresses (
     area            VARCHAR(100),
     city            VARCHAR(50)  NOT NULL,
     pincode         VARCHAR(10)  NOT NULL,
+    CONSTRAINT chk_addresses_pincode_format CHECK (pincode REGEXP '^[0-9]{6}$'),
     CONSTRAINT fk_addresses_customer
         FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
         ON DELETE CASCADE
@@ -77,7 +79,8 @@ CREATE TABLE delivery_partners (
     name            VARCHAR(100) NOT NULL,
     phone           VARCHAR(15)  NOT NULL,
     vehicle_type    ENUM('bike','scooter','bicycle','car') NOT NULL,
-    CONSTRAINT uq_partners_phone UNIQUE (phone)
+    CONSTRAINT uq_partners_phone UNIQUE (phone),
+    CONSTRAINT chk_partners_phone_format CHECK (phone REGEXP '^[0-9]{10}$')
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------
@@ -190,7 +193,61 @@ CREATE TABLE reviews (
         CHECK (delivery_rating IS NULL OR delivery_rating BETWEEN 1 AND 5)
 ) ENGINE=InnoDB;
 
+-- ------------------------------------------------------------
+-- Indexes: orders.status and orders.order_time are filtered/grouped
+-- heavily by the business-question queries (cancellation rate,
+-- peak hours, revenue by status) but aren't covered by any PK/FK
+-- index, so add them explicitly.
+-- ------------------------------------------------------------
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_order_time ON orders(order_time);
+
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ------------------------------------------------------------
+-- Trigger: keep orders.total_amount in sync with order_items.
+-- total_amount is stored (denormalized) for query convenience,
+-- so without this it can silently drift if order_items change
+-- after the order is placed.
+-- ------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_orderitems_ai_total;
+DROP TRIGGER IF EXISTS trg_orderitems_au_total;
+DROP TRIGGER IF EXISTS trg_orderitems_ad_total;
+
+CREATE TRIGGER trg_orderitems_ai_total
+AFTER INSERT ON order_items
+FOR EACH ROW
+UPDATE orders
+   SET total_amount = (SELECT COALESCE(SUM(quantity * unit_price), 0)
+                        FROM order_items WHERE order_id = NEW.order_id)
+ WHERE order_id = NEW.order_id;
+
+DELIMITER $$
+CREATE TRIGGER trg_orderitems_au_total
+AFTER UPDATE ON order_items
+FOR EACH ROW
+BEGIN
+    UPDATE orders
+       SET total_amount = (SELECT COALESCE(SUM(quantity * unit_price), 0)
+                            FROM order_items WHERE order_id = NEW.order_id)
+     WHERE order_id = NEW.order_id;
+
+    IF OLD.order_id <> NEW.order_id THEN
+        UPDATE orders
+           SET total_amount = (SELECT COALESCE(SUM(quantity * unit_price), 0)
+                                FROM order_items WHERE order_id = OLD.order_id)
+         WHERE order_id = OLD.order_id;
+    END IF;
+END$$
+DELIMITER ;
+
+CREATE TRIGGER trg_orderitems_ad_total
+AFTER DELETE ON order_items
+FOR EACH ROW
+UPDATE orders
+   SET total_amount = (SELECT COALESCE(SUM(quantity * unit_price), 0)
+                        FROM order_items WHERE order_id = OLD.order_id)
+ WHERE order_id = OLD.order_id;
 
 -- ------------------------------------------------------------
 -- Quick check: list all tables just created
