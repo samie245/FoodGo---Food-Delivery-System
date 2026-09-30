@@ -1,180 +1,173 @@
 -- ============================================================
 -- FoodGo: Business Questions & Analytical Queries
+-- queries/queries.sql
+-- Created by Sarang
 -- ============================================================
 
 USE foodgo;
 
 -- ------------------------------------------------------------
 -- Q1: What is the most ordered food item?
--- Concepts: JOIN, SUM(quantity), GROUP BY
 -- ------------------------------------------------------------
 SELECT 
-    mi.item_id,
-    mi.name AS item_name,
-    r.name AS restaurant_name,
-    SUM(oi.quantity) AS total_ordered
-FROM order_items oi
-JOIN menu_items mi ON oi.item_id = mi.item_id
-JOIN restaurants r ON mi.restaurant_id = r.restaurant_id
-GROUP BY mi.item_id, mi.name, r.name
-ORDER BY total_ordered DESC
-LIMIT 1;
+    mi.item_id,                          -- Selects the unique item ID from menu items
+    mi.name AS item_name,                -- Selects the dish name and renames it for the output
+    r.name AS restaurant_name,           -- Selects the partner restaurant name
+    SUM(oi.quantity) AS total_ordered    -- Adds up all quantities ordered for this dish across the platform
+FROM order_items oi                      -- Starts from order_items (aliased as 'oi')
+JOIN menu_items mi ON oi.item_id = mi.item_id -- Connects to menu_items matching item IDs
+JOIN restaurants r ON mi.restaurant_id = r.restaurant_id -- Connects to restaurants to get the venue name
+GROUP BY mi.item_id, mi.name, r.name     -- Groups the aggregated sums by each unique dish
+ORDER BY total_ordered DESC              -- Sorts the totals from highest to lowest
+LIMIT 1;                                 -- Restricts the output to only the single top result
 
 -- ------------------------------------------------------------
 -- Q2: Which restaurant has the highest revenue?
--- Concepts: Multi-table JOIN, SUM, ranking
 -- ------------------------------------------------------------
 SELECT 
-    r.restaurant_id,
-    r.name AS restaurant_name,
-    r.cuisine,
-    SUM(oi.quantity * oi.unit_price) AS total_revenue
-FROM orders o
-JOIN restaurants r ON o.restaurant_id = r.restaurant_id
-JOIN order_items oi ON o.order_id = oi.order_id
-WHERE o.status = 'delivered'
-GROUP BY r.restaurant_id, r.name, r.cuisine
-ORDER BY total_revenue DESC
-LIMIT 1;
+    r.restaurant_id,                     -- Selects restaurant ID
+    r.name AS restaurant_name,           -- Selects restaurant name
+    r.cuisine,                           -- Selects cuisine type
+    SUM(oi.quantity * oi.unit_price) AS total_revenue -- Multiplies quantity by historical price, then sums it up
+FROM orders o                            -- Starts with orders table ('o')
+JOIN restaurants r ON o.restaurant_id = r.restaurant_id -- Joins to match restaurant info
+JOIN order_items oi ON o.order_id = oi.order_id -- Joins to grab the items inside those orders
+WHERE o.status = 'delivered'             -- Filters to only include successfully delivered orders
+GROUP BY r.restaurant_id, r.name, r.cuisine -- Groups revenue calculation per restaurant
+ORDER BY total_revenue DESC              -- Sorts from highest revenue to lowest
+LIMIT 1;                                 -- Returns only the top revenue generator
 
 -- ------------------------------------------------------------
 -- Q3: What is the average order value?
--- Concepts: Subquery / CTE, AVG
 -- ------------------------------------------------------------
-WITH OrderTotals AS (
+WITH OrderTotals AS (                    -- Creates a temporary result set (CTE) named OrderTotals
     SELECT 
         o.order_id,
-        SUM(oi.quantity * oi.unit_price) AS order_value
+        SUM(oi.quantity * oi.unit_price) AS order_value -- Calculates total value per individual order
     FROM orders o
     JOIN order_items oi ON o.order_id = oi.order_id
-    WHERE o.status = 'delivered'
+    WHERE o.status = 'delivered'         -- Only looks at delivered orders
     GROUP BY o.order_id
 )
 SELECT 
-    ROUND(AVG(order_value), 2) AS average_order_value
-FROM OrderTotals;
+    ROUND(AVG(order_value), 2) AS average_order_value -- Takes the mathematical average of all order values and rounds to 2 decimals
+FROM OrderTotals;                        -- Pulls from our temporary CTE table
 
 -- ------------------------------------------------------------
 -- Q4: Who are the top customers by spend?
--- Concepts: Aggregation by customer, LIMIT
 -- ------------------------------------------------------------
 SELECT 
-    c.customer_id,
-    c.name AS customer_name,
-    COUNT(DISTINCT o.order_id) AS total_orders,
-    SUM(oi.quantity * oi.unit_price) AS total_spent
-FROM customers c
-JOIN orders o ON c.customer_id = o.customer_id
-JOIN order_items oi ON o.order_id = oi.order_id
-WHERE o.status = 'delivered'
-GROUP BY c.customer_id, c.name
-ORDER BY total_spent DESC
-LIMIT 5;
+    c.customer_id,                       -- Customer ID
+    c.name AS customer_name,             -- Customer name
+    COUNT(DISTINCT o.order_id) AS total_orders, -- Counts unique orders placed
+    SUM(oi.quantity * oi.unit_price) AS total_spent -- Sums total money spent on delivered items
+FROM customers c                         -- Starts with customers ('c')
+JOIN orders o ON c.customer_id = o.customer_id -- Joins to their orders
+JOIN order_items oi ON o.order_id = oi.order_id -- Joins to order items for pricing
+WHERE o.status = 'delivered'             -- Restricts to delivered orders
+GROUP BY c.customer_id, c.name           -- Groups calculations per customer
+ORDER BY total_spent DESC                -- Sorts from highest spender down
+LIMIT 5;                                 -- Limits list to top 5 customers
 
 -- ------------------------------------------------------------
 -- Q5: What is the average delivery time?
--- Concepts: Time difference functions, AVG
 -- ------------------------------------------------------------
 SELECT 
-    ROUND(AVG(TIMESTAMPDIFF(MINUTE, d.pickup_time, d.delivered_time)), 2) AS avg_delivery_time_minutes
-FROM deliveries d
-JOIN orders o ON d.order_id = o.order_id
-WHERE o.status = 'delivered'
-  AND d.pickup_time IS NOT NULL 
-  AND d.delivered_time IS NOT NULL;
+    ROUND(AVG(TIMESTAMPDIFF(MINUTE, d.pickup_time, d.delivered_time)), 2) AS avg_delivery_time_minutes 
+    -- Calculates the difference in minutes between pickup and delivery, finds the average, and rounds it
+FROM deliveries d                        -- Starts with deliveries table ('d')
+JOIN orders o ON d.order_id = o.order_id -- Joins to orders
+WHERE o.status = 'delivered'             -- Filters for delivered orders
+  AND d.pickup_time IS NOT NULL          -- Ensures pickup time exists
+  AND d.delivered_time IS NOT NULL;      -- Ensures drop-off time exists
 
 -- ------------------------------------------------------------
--- Q6: Which restaurants have high ratings? (Average rating >= 4.0)
--- Concepts: AVG rating, HAVING
+-- Q6: Which restaurants have high ratings?
 -- ------------------------------------------------------------
 SELECT 
-    r.restaurant_id,
-    r.name AS restaurant_name,
-    ROUND(AVG(rev.restaurant_rating), 2) AS avg_restaurant_rating,
-    COUNT(rev.review_id) AS total_reviews
-FROM reviews rev
-JOIN orders o ON rev.order_id = o.order_id
-JOIN restaurants r ON o.restaurant_id = r.restaurant_id
-WHERE rev.restaurant_rating IS NOT NULL
-GROUP BY r.restaurant_id, r.name
-HAVING AVG(rev.restaurant_rating) >= 4.0
-ORDER BY avg_restaurant_rating DESC;
+    r.restaurant_id,                     -- Restaurant ID
+    r.name AS restaurant_name,           -- Restaurant name
+    ROUND(AVG(rev.restaurant_rating), 2) AS avg_restaurant_rating, -- Averages their review scores
+    COUNT(rev.review_id) AS total_reviews -- Counts how many reviews they received
+FROM reviews rev                         -- Starts from reviews table ('rev')
+JOIN orders o ON rev.order_id = o.order_id -- Joins to orders to trace back to the restaurant
+JOIN restaurants r ON o.restaurant_id = r.restaurant_id -- Joins to restaurants
+WHERE rev.restaurant_rating IS NOT NULL  -- Ignores empty ratings
+GROUP BY r.restaurant_id, r.name         -- Groups by restaurant
+HAVING AVG(rev.restaurant_rating) >= 4.0 -- Filters group results to keep only those averaging 4.0 or higher
+ORDER BY avg_restaurant_rating DESC;     -- Sorts highest rated first
 
 -- ------------------------------------------------------------
 -- Q7: How many orders were cancelled?
--- Concepts: COUNT with WHERE / CASE on status
 -- ------------------------------------------------------------
 SELECT 
-    COUNT(*) AS total_cancelled_orders,
-    (SELECT COUNT(*) FROM orders) AS total_orders_placed,
-    ROUND((COUNT(*) * 100.0) / (SELECT COUNT(*) FROM orders), 2) AS cancellation_percentage
+    COUNT(*) AS total_cancelled_orders,  -- Counts total rows where status is cancelled
+    (SELECT COUNT(*) FROM orders) AS total_orders_placed, -- Subquery counting absolute total orders
+    ROUND((COUNT(*) * 100.0) / (SELECT COUNT(*) FROM orders), 2) AS cancellation_percentage 
+    -- Calculates cancellation rate as a percentage
 FROM orders
-WHERE status = 'cancelled';
+WHERE status = 'cancelled';              -- Filters strictly for cancelled status
 
 -- ------------------------------------------------------------
 -- Q8 [Extra]: What are the peak ordering hours?
--- Concepts: HOUR(), GROUP BY
 -- ------------------------------------------------------------
 SELECT 
-    HOUR(order_time) AS order_hour,
-    COUNT(*) AS total_orders
+    HOUR(order_time) AS order_hour,      -- Extracts the hour (0-23) from the order timestamp
+    COUNT(*) AS total_orders             -- Counts how many orders happened in that specific hour
 FROM orders
-GROUP BY HOUR(order_time)
-ORDER BY total_orders DESC;
+GROUP BY HOUR(order_time)                -- Groups totals by each hour of the day
+ORDER BY total_orders DESC;              -- Sorts from busiest hour to slowest
 
 -- ------------------------------------------------------------
 -- Q9 [Extra]: Delivery partner performance & speed ranking
--- Concepts: JOIN, AVG delivery duration, ranking
 -- ------------------------------------------------------------
 SELECT 
-    dp.partner_id,
-    dp.name AS partner_name,
-    dp.vehicle_type,
-    COUNT(d.delivery_id) AS completed_deliveries,
+    dp.partner_id,                       -- Partner ID
+    dp.name AS partner_name,             -- Partner name
+    dp.vehicle_type,                     -- Vehicle type (bike, scooter, etc.)
+    COUNT(d.delivery_id) AS completed_deliveries, -- Count of completed deliveries
     ROUND(AVG(TIMESTAMPDIFF(MINUTE, d.pickup_time, d.delivered_time)), 2) AS avg_delivery_minutes
+    -- Averages their delivery speed in minutes
 FROM delivery_partners dp
 JOIN deliveries d ON dp.partner_id = d.partner_id
 JOIN orders o ON d.order_id = o.order_id
 WHERE o.status = 'delivered' AND d.delivered_time IS NOT NULL
 GROUP BY dp.partner_id, dp.name, dp.vehicle_type
-ORDER BY avg_delivery_minutes ASC;
+ORDER BY avg_delivery_minutes ASC;       -- Sorts fastest delivery times first
 
 -- ------------------------------------------------------------
 -- Q10 [Extra]: Cuisine-wise revenue breakdown
--- Concepts: Multi-level GROUP BY, SUM
 -- ------------------------------------------------------------
 SELECT 
-    r.cuisine,
-    COUNT(DISTINCT r.restaurant_id) AS active_restaurants,
-    COUNT(o.order_id) AS total_orders_delivered,
-    SUM(oi.quantity * oi.unit_price) AS cuisine_revenue
+    r.cuisine,                           -- Cuisine type (South Indian, Chinese, etc.)
+    COUNT(DISTINCT r.restaurant_id) AS active_restaurants, -- Counts unique restaurants in that cuisine
+    COUNT(o.order_id) AS total_orders_delivered, -- Total successful orders for this cuisine
+    SUM(oi.quantity * oi.unit_price) AS cuisine_revenue -- Total earnings for this cuisine category
 FROM restaurants r
 JOIN orders o ON r.restaurant_id = o.restaurant_id
 JOIN order_items oi ON o.order_id = oi.order_id
 WHERE o.status = 'delivered'
-GROUP BY r.cuisine
-ORDER BY cuisine_revenue DESC;
+GROUP BY r.cuisine                       -- Groups metrics by cuisine category
+ORDER BY cuisine_revenue DESC;           -- Sorts highest earning cuisine first
 
 -- ------------------------------------------------------------
 -- Q11 [Extra]: Customers ordering from multiple different restaurants
--- Concepts: HAVING COUNT(DISTINCT ...)
 -- ------------------------------------------------------------
 SELECT 
     c.customer_id,
     c.name AS customer_name,
-    COUNT(DISTINCT o.restaurant_id) AS unique_restaurants_tried
+    COUNT(DISTINCT o.restaurant_id) AS unique_restaurants_tried -- Counts distinct restaurants a user ordered from
 FROM customers c
 JOIN orders o ON c.customer_id = o.customer_id
 GROUP BY c.customer_id, c.name
-HAVING COUNT(DISTINCT o.restaurant_id) > 1
+HAVING COUNT(DISTINCT o.restaurant_id) > 1 -- Filters out users who only ordered from 1 restaurant
 ORDER BY unique_restaurants_tried DESC;
 
 -- ------------------------------------------------------------
 -- Q12 [Extra]: Total revenue lost due to order cancellations
--- Concepts: Conditional aggregation, JOIN
 -- ------------------------------------------------------------
 SELECT 
-    COUNT(o.order_id) AS cancelled_order_count,
-    SUM(o.total_amount) AS estimated_revenue_lost
+    COUNT(o.order_id) AS cancelled_order_count, -- Counts total cancelled orders
+    SUM(o.total_amount) AS estimated_revenue_lost -- Sums up the monetary value of those lost orders
 FROM orders o
-WHERE o.status = 'cancelled';
+WHERE o.status = 'cancelled';            -- Targets only cancelled rows
