@@ -3,6 +3,35 @@
 -- schema/create_tables.sql
 -- Created by Samhita (DB schema, keys, relationships, full setup)
 -- ============================================================
+--
+-- CHANGELOG
+-- v1 - Initial schema: 10 tables, all PK/FK relationships,
+--      base CHECK constraints (price > 0, quantity > 0, ratings
+--      1-5, total_amount >= 0).
+-- v2 - Added by Samhita:
+--      1. Format CHECK constraints on customers.phone,
+--         delivery_partners.phone (10 digits) and
+--         addresses.pincode (6 digits) -- tightens Integrity
+--         Constraints beyond FK/range checks.
+--      2. Indexes on orders.status and orders.order_time --
+--         these columns are filtered/grouped heavily by the
+--         business-question queries (cancellation rate, peak
+--         ordering hours, status-based revenue) but weren't
+--         covered by any existing PK/FK index.
+--      3. Triggers (trg_orderitems_ai_total, _au_total,
+--         _ad_total) that recalculate orders.total_amount on
+--         every INSERT/UPDATE/DELETE to order_items -- closes
+--         the redundancy risk flagged in Supriya's
+--         normalization analysis (N16/N17): total_amount is
+--         stored for query convenience but is fully derivable
+--         from order_items, so without this it could silently
+--         drift out of sync if line items changed after the
+--         order was placed.
+--      Verified against the team's existing insert_tables.sql,
+--      queries.sql and normalization_validation.sql -- all run
+--      unmodified with identical results, no changes required
+--      on anyone else's file.
+-- ============================================================
 
 DROP DATABASE IF EXISTS foodgo;
 CREATE DATABASE foodgo
