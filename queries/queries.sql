@@ -1,7 +1,7 @@
 -- ============================================================
 -- FoodGo: Business Questions & Analytical Queries
 -- queries/queries.sql
--- Created by Sarang
+-- Created for Team 5 | DBMS Course Project
 -- ============================================================
 
 USE foodgo;
@@ -171,3 +171,14 @@ SELECT
     SUM(o.total_amount) AS estimated_revenue_lost -- Sums up the monetary value of those lost orders
 FROM orders o
 WHERE o.status = 'cancelled';            -- Targets only cancelled rows
+
+-- ------------------------------------------------------------
+-- Q13 [Extra]: What are the most popular payment methods?
+-- ------------------------------------------------------------
+SELECT 
+    method,                              -- Payment method type (upi, card, cash, netbanking)
+    COUNT(*) AS total_transactions,      -- Counts how many times this payment method was chosen
+    SUM(amount) AS total_amount_processed -- Sums up total monetary volume processed via this method
+FROM payments
+GROUP BY method                          -- Groups the counts and sums by payment method
+ORDER BY total_transactions DESC;        -- Sorts from most frequently used to least used
