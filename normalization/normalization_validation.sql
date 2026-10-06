@@ -5,27 +5,23 @@
 --
 -- PURPOSE
 -- Explain 1NF, 2NF and 3NF using the existing FoodGo tables.
--- Demonstrate decomposition and verify reconstruction.
+-- Show how data can be separated and checked after separation.
 --
 -- SAFETY
--- No CREATE, ALTER, DROP, INSERT, UPDATE or DELETE.
--- No new database, table, view or procedure.
--- Existing data and schema remain unchanged.
+-- This script only reads and checks the existing data.
+-- It does not create, change or delete any database data or tables.
 --
 -- IMPORTANT
--- This is an analysis/demonstration script, not a migration.
--- SQL checks test the supplied data; they do not prove that an
--- unenforced dependency holds in every possible future state.
---
--- Run against a stable copy of the supplied sample database.
--- Expected results assume the original seed is unchanged.
+-- This is only a normalization analysis and demonstration.
+-- The original FoodGo database remains unchanged.
+-- The checks are based on the current sample data.
 -- ============================================================
 
-USE foodgo;
 
 -- ============================================================
 -- N01. ENVIRONMENT
--- Before we start our normalization checks, let's confirm that we're working in the correct database and know the current MySQL settings.
+-- Check that we are using the correct FoodGo database
+-- and check the current MySQL settings.
 -- ============================================================
 
 SELECT
@@ -34,10 +30,11 @@ SELECT
     VERSION() AS mysql_version,
     @@SESSION.foreign_key_checks AS foreign_key_checks;
 
+
 -- ============================================================
 -- N02. EXISTING BASE TABLES
--- Show all tables in FoodGo 
--- Expected: 10 rows, one per original table.
+-- Check and display all existing tables in the FoodGo database.
+-- Expected: 10 tables.
 -- ============================================================
 
 SELECT
@@ -47,28 +44,18 @@ WHERE TABLE_SCHEMA = 'foodgo'
   AND TABLE_TYPE = 'BASE TABLE'
 ORDER BY TABLE_NAME;
 
+
 -- ============================================================
 -- N03. PRIMARY AND UNIQUE KEYS
--- Display all primary and unique keys in the FoodGo tables
--- 
--- A candidate key is a minimal, mandatory unique identifier.
+-- Display all primary and unique constraints in the FoodGo tables.
 --
--- customers:
---   customer_id and phone are candidate keys.
---   email is nullable UNIQUE; do not treat it as a mandatory
---   relational candidate key.
---
--- delivery_partners:
---   partner_id and phone are candidate keys.
---
--- deliveries / payments / reviews:
---   Their primary ID and NOT NULL UNIQUE order_id are keys.
---
--- order_items:
---   Composite primary key = (order_id, item_id).
---
--- 
+-- Candidate keys are columns that can uniquely identify a record.
+-- customer_id and phone_num uniquely identify customers.
+-- partner_id and phone_num uniquely identify delivery partners.
+-- deliveries, payments and reviews have unique IDs and order_id.
+-- order_items uses (order_id, item_id) as a composite primary key.
 -- ============================================================
+
 
 SELECT
     tc.TABLE_NAME AS table_name,
@@ -96,45 +83,28 @@ ORDER BY
 -- ============================================================
 -- NORMALIZATION STARTING POINT: UNF
 --
--- A hypothetical order form might contain:
---
--- OrderForm(
---   order_id,
---   customer_details,
---   restaurant_details,
---   items = [
---     {item_id, item_name, quantity, unit_price},
---     {item_id, item_name, quantity, unit_price},
---     ...
---   ]
--- )
---
--- The repeating items group is the conceptual UNF problem.
---
--- We do NOT create an unnecessary UNF table or store
--- comma-separated item lists in the working database.
+-- This is an example of how an order could look before normalization.
+-- Multiple items are stored together in one repeating group.
+-- This repeating group is the main UNF problem.
+-- We use this only as an example and do not create an UNF table.
 -- ============================================================
 
 -- ============================================================
 -- N04. FIRST NORMAL FORM: ONE ROW PER ORDERED ITEM
---Take Order 2, collect its customer, restaurant and item information from the different tables, and show each ordered item as a separate row. This demonstrates the 1NF idea.”
--- Example: existing order 2.
 --
--- This reconstructed flat relation has:
---   one item per row;
---   atomic values;
---   a row identifier of (order_id, item_id).
+-- Example: Sneha places Order 2 from a restaurant.
+-- She buys 3 units of item 74 and 2 units of item 77.
+-- Instead of storing both items together, we store each
+-- ordered item in a separate row.
 --
--- It illustrates 1NF, but contains partial dependencies:
---
---   order_id -> order_time, customer_id, restaurant_id
---   item_id  -> item_name
---
--- Therefore this flat teaching representation is not 2NF.
+-- This makes every value atomic and demonstrates 1NF.
+-- The data still has partial dependencies, so it is not yet 2NF.
 --
 -- Expected: 2 rows.
---
 -- ============================================================
+-- ============================================================
+
+
 
 SELECT
     o.order_id,
@@ -162,30 +132,28 @@ ORDER BY oi.item_id;
 -- ============================================================
 -- SECOND NORMAL FORM
 --
--- A relation is in 2NF when:
---   it is in 1NF; and
---   no non-prime attribute depends on a proper subset
---   of a candidate key.
+-- Example: Sneha's Order 2 contains two items.
+-- We separate the information into three parts:
+-- 1. Information about the order
+-- 2. Information about each menu item
+-- 3. Information about a specific item in that order
 --
--- Decompose the flat order-line representation into:
---   order-level facts;
---   item-level facts;
---   facts specific to the complete order-item pair.
---
--- The following three queries use the same order 2.
+-- This removes information that depends only on part of
+-- the combined order-item key and demonstrates 2NF.
 -- ============================================================
+
 
 -- ============================================================
 -- N05. 2NF: ORDER-LEVEL FACTS
 --
--- order_id -> customer_id, restaurant_id, address_id,
---             order_time, status, total_amount
---
--- Order-level facts do not need to repeat in every stored line.
+-- Example: Sneha's Order 2 has one customer, restaurant,
+-- address, order time, status and total amount.
+-- These details belong to the order itself, so we store them
+-- once instead of repeating them for every item.
 --
 -- Expected: 1 row.
--- 
 -- ============================================================
+
 
 SELECT
     order_id,
@@ -201,14 +169,13 @@ WHERE order_id = 2;
 -- ============================================================
 -- N06. 2NF: ITEM-LEVEL FACTS
 --
--- item_id -> restaurant_id, name, price, is_veg
---
--- EXISTS selects the menu items used in order 2 without
--- duplicating menu rows.
+-- Example: Sneha ordered item 74 and item 77.
+-- Each item has its own restaurant, name, price and veg status.
+-- These details belong to the item itself, not to the order.
 --
 -- Expected: item IDs 74 and 77.
--- 
 -- ============================================================
+
 
 SELECT
     mi.item_id,
@@ -226,24 +193,16 @@ WHERE EXISTS (
 ORDER BY mi.item_id;
 
 -- ============================================================
--- N07. 2NF: COMPLETE COMPOSITE-KEY DEPENDENCY
+-- N07. 2NF: ORDER-ITEM FACTS
 --
--- (order_id, item_id) -> quantity, unit_price
+-- Example: In Sneha's Order 2, item 74 was ordered 3 times
+-- at ₹299 each, while item 77 was ordered 2 times at ₹449 each.
+-- Quantity and purchase price depend on both the order and item.
 --
--- quantity belongs to a specific item in a specific order.
--- unit_price is the historical purchase price for that line.
---
--- Do NOT assume:
---   item_id -> unit_price across all order history.
---
--- Current menu prices may change between orders.
---
--- Expected:
---   order 2, item 74, quantity 3, unit_price 299.00
---   order 2, item 77, quantity 2, unit_price 449.00
---
---
+-- The stored unit price is the price paid at that time,
+-- because the menu price may change later.
 -- ============================================================
+
 
 SELECT
     order_id,
@@ -257,38 +216,31 @@ ORDER BY item_id;
 -- ============================================================
 -- THIRD NORMAL FORM
 --
--- For every non-trivial dependency X -> A:
---   X must be a superkey, OR A must be a prime attribute.
+-- Example: Sneha's order contains an address.
+-- The address already tells us which customer owns it.
+-- So the customer's information can be obtained through
+-- the address instead of storing it again in the order.
 --
--- Customer names belong in customers.
--- Restaurant names belong in restaurants.
+-- Customer details belong in customers.
+-- Restaurant details belong in restaurants.
 -- Address details belong in addresses.
 --
--- IMPORTANT BASELINE ISSUE
---
--- If an order must use an address owned by its customer:
---
---   order_id -> address_id
---   address_id -> customer_id
---
--- Therefore orders contains a transitive dependency.
---
--- The following queries demonstrate this and a possible
--- normalized projection WITHOUT changing the actual schema.
+-- The following queries check this relationship without
+-- changing our actual FoodGo tables.
 -- ============================================================
 
+
+
 -- ============================================================
--- N08. EXAMINE ADDRESS OWNERSHIP IN THE SEED
+-- N08. CHECK ADDRESS OWNERSHIP
 --
--- Example: address 9 is used by orders 1 and 4.
--- Both orders belong to customer 8 in the supplied seed.
---
--- Repeated use of one address shows address_id is not
--- a unique identifier for orders.
+-- Example: Address 9 is used by Order 1 and Order 4.
+-- Both orders belong to Customer 8 in our sample data.
+-- This shows that one address can be used by multiple orders.
 --
 -- Expected: 2 rows.
---
 -- ============================================================
+
 
 SELECT
     o.order_id,
@@ -302,17 +254,18 @@ WHERE o.address_id = 9
 ORDER BY o.order_id;
 
 -- ============================================================
--- N09. CHECK THE ADDRESS-OWNER ASSUMPTION
+-- N09. CHECK THE ADDRESS-OWNER RELATIONSHIP
 --
--- These are DATA checks, not proof of enforcement.
--- Independent foreign keys do not enforce owner equality.
+-- We check whether every order's customer matches
+-- the customer who owns its address.
+--
+-- This checks our current data but does not automatically
+-- prevent incorrect data from being entered in the future.
 --
 -- Expected:
---   checked_orders = 40
---   missing_address_orders = 0
---   ownership_mismatches = 0
---
---
+-- checked_orders = 40
+-- missing_address_orders = 0
+-- ownership_mismatches = 0
 -- ============================================================
 
 SELECT
@@ -336,19 +289,20 @@ LEFT JOIN addresses AS a
 -- ============================================================
 -- N10. 3NF ORDER-HEADER PROJECTION
 --
--- customer_id is omitted from this SELECT because it can be
--- derived through addresses under the ownership assumption.
+-- Example: For Sneha's Order 2, we keep the order details
+-- such as restaurant, address, time, status and total amount.
+-- Customer information can be found through the address,
+-- so we don't repeat customer_id here.
 --
--- total_amount is retained here deliberately.
+-- total_amount is kept because it stores the amount recorded
+-- for that order.
 --
--- A stored cross-table aggregate is a consistency concern,
--- but is not automatically a within-relation 3NF violation.
+-- This query only demonstrates the idea; it does not change
+-- the actual orders table.
 --
--- This query does NOT remove any physical column.
---
--- Expected: 1 row for order 2.
---
+-- Expected: 1 row for Order 2.
 -- ============================================================
+
 
 SELECT
     order_id,
@@ -363,12 +317,14 @@ WHERE order_id = 2;
 -- ============================================================
 -- N11. 3NF: ADDRESS FACTS
 --
--- address_id -> customer_id, line1, area, city, pincode
+-- Example: Sneha's Order 2 uses Address 6.
+-- Address 6 tells us the customer who owns it and also stores
+-- the street, area, city and pincode.
 --
--- No additional dependency such as pincode -> city is assumed
--- for this project's normalization assessment.
+-- These details belong to the address, so we keep them
+-- in the addresses table.
 --
--- Expected: address 6, customer 5.
+-- Expected: Address 6, Customer 5.
 -- ============================================================
 
 SELECT
@@ -386,13 +342,14 @@ WHERE o.order_id = 2;
 -- ============================================================
 -- N12. 3NF: CUSTOMER FACTS
 --
--- customer_id -> name, phone, email
+-- Example: Customer 5 is Sneha Nair.
+-- The customer's name, phone and email belong to the customer,
+-- so they are stored in the customers table.
 --
--- Only ID and name are displayed to avoid exposing contact
--- details in screenshots.
+-- We display only the ID and name here to keep contact details
+-- private in the screenshots.
 --
--- Expected: customer 5, Sneha Nair.
--- 
+-- Expected: Customer 5, Sneha Nair.
 -- ============================================================
 
 SELECT
@@ -408,10 +365,12 @@ WHERE o.order_id = 2;
 -- ============================================================
 -- N13. 3NF: RESTAURANT FACTS
 --
--- restaurant_id -> name, cuisine, city, is_active
+-- Example: Order 2 is from Restaurant 8,
+-- The Garden Continental.
+-- Its name, cuisine, city and active status belong to the
+-- restaurant, so we keep them in the restaurants table.
 --
--- Expected: restaurant 8, The Garden Continental.
--- 
+-- Expected: Restaurant 8, The Garden Continental.
 -- ============================================================
 
 SELECT
@@ -426,41 +385,30 @@ JOIN orders AS o
 WHERE o.order_id = 2;
 
 -- ============================================================
--- EXTRA CONTRIBUTION 1:
--- LOSSLESS RECONSTRUCTION CHECK FOR ORDER HEADERS
+-- EXTRA CONTRIBUTION 1: LOSSLESS RECONSTRUCTION
 --
--- A CTE is a statement-scoped query result, not a new table.
+-- Example: We temporarily leave customer_id out of the order
+-- information and then use the address to find the customer.
 --
--- Step 1:
--- Project orders without customer_id.
+-- We compare the reconstructed order with the original order
+-- to check whether we can get the same information back.
 --
--- Step 2:
--- Reconstruct customer_id by joining addresses.
---
--- Step 3:
--- Compare every reconstructed header with the original.
---
--- The join preserves one row per order because:
---   addresses.address_id is a primary key;
---   orders.address_id is a mandatory foreign key.
---
--- Recovering the SAME customer additionally requires the
--- ownership rule checked in N09.
---
--- This demonstrates reconstruction for the current data.
--- It does not mean the physical orders table was normalized.
+-- This is only a check; the actual orders table is not changed.
 -- ============================================================
+
+
 
 -- ============================================================
 -- N14. RECONSTRUCTION SUMMARY
 --
--- <=> is MySQL's NULL-safe equality operator.
+-- We compare the original orders with the reconstructed orders.
+-- If both contain the same information, reconstruction was
+-- successful.
 --
 -- Expected:
---   original_orders = 40
---   reconstructed_orders = 40
---   mismatched_headers = 0
---
+-- original_orders = 40
+-- reconstructed_orders = 40
+-- mismatched_headers = 0
 -- ============================================================
 
 WITH normalized_order_projection AS (
@@ -535,14 +483,17 @@ SELECT
 -- ============================================================
 
 -- ============================================================
--- N15. SHOW CURRENT PRICE AND HISTORICAL PRICE
+-- N15. CURRENT PRICE VS HISTORICAL PRICE
 --
--- Expected: two rows for order 2.
--- They happen to match in this seed.
--- Matching sample values do not make them the same attribute.
+-- Example: Sneha bought item 74 and item 77 in Order 2.
+-- We show the current menu price and the price Sneha actually
+-- paid when she placed the order.
 --
--- 
+-- The two prices happen to be the same in our sample data,
+-- but they represent different information.
 -- ============================================================
+
+
 
 SELECT
     oi.order_id,
@@ -559,18 +510,14 @@ WHERE oi.order_id = 2
 ORDER BY oi.item_id;
 
 -- ============================================================
--- N16. STORED TOTAL VERSUS CALCULATED TOTAL
+-- N16. STORED TOTAL VS CALCULATED TOTAL
 --
--- Use historical unit_price, not menu_items.price.
+-- Example: Sneha's Order 2 has a stored total of ₹1795.
+-- We calculate the total again using the quantity and the
+-- historical price paid for each item.
 --
--- No rows are modified.
---
--- Expected for order 2:
---   stored_total = 1795.00
---   calculated_total = 1795.00
---   difference = 0.00
---
--- 
+-- If both totals are the same, the order total is consistent.
+-- Expected difference: ₹0.
 -- ============================================================
 
 SELECT
@@ -590,20 +537,16 @@ GROUP BY
 -- ============================================================
 -- N17. CHECK ALL ORDER TOTALS
 --
--- LEFT JOIN also detects orders that have no order lines.
--- An order without lines is not silently treated as valid.
+-- We check every order to make sure its stored total matches
+-- the total calculated from its ordered items.
+--
+-- We also check whether any order has no items.
 --
 -- Expected:
---   checked_orders = 40
---   orders_without_items = 0
---   mismatched_totals = 0
---
--- This checks cross-table consistency.
--- It is NOT a standalone proof of 3NF.
---
--- 
+-- checked_orders = 40
+-- orders_without_items = 0
+-- mismatched_totals = 0
 -- ============================================================
-
 WITH calculated_totals AS (
     SELECT
         order_id,
@@ -633,27 +576,27 @@ LEFT JOIN calculated_totals AS t
     ON t.order_id = o.order_id;
 
 -- ============================================================
--- EXTRA CONTRIBUTION 3:
--- DISTINGUISH NORMALIZATION FROM BUSINESS-RULE ENFORCEMENT
+-- EXTRA CONTRIBUTION 3: BUSINESS-RULE CHECK
 --
--- Each order belongs to one restaurant.
--- Each menu item also belongs to one restaurant.
+-- Example: An order belongs to one restaurant, and every menu
+-- item also belongs to a restaurant.
 --
--- The separate foreign keys do not automatically guarantee
--- that both restaurant IDs match for an ordered item.
---
--- A normalized structure can still need extra business checks.
+-- We check that the restaurant of the order matches the
+-- restaurant of each item ordered.
 -- ============================================================
 
 -- ============================================================
 -- N18. ORDER-ITEM RESTAURANT CONSISTENCY
 --
--- Expected:
---   checked_order_items = 74
---   missing_parent_lines = 0
---   restaurant_mismatches = 0
+-- We check every ordered item to make sure:
+-- 1. The order exists.
+-- 2. The menu item exists.
+-- 3. The order's restaurant matches the item's restaurant.
 --
--- 
+-- Expected:
+-- checked_order_items = 74
+-- missing_parent_lines = 0
+-- restaurant_mismatches = 0
 -- ============================================================
 
 SELECT
@@ -685,12 +628,13 @@ LEFT JOIN menu_items AS mi
 -- ============================================================
 -- N19. FINAL DATA INVENTORY
 --
--- This script contains only read operations and USE.
--- Counts below confirm the currently visible inventory.
+-- We count the rows in all 10 FoodGo tables to confirm that
+-- the original data is still unchanged.
 --
 -- Expected total: 347 rows across 10 tables.
--- 
 -- ============================================================
+
+
 
 WITH row_counts AS (
     SELECT 'customers' AS table_name, COUNT(*) AS row_count
@@ -739,64 +683,23 @@ FROM row_counts;
 -- ============================================================
 -- FINAL NORMALIZATION CONCLUSION
 --
--- Under the stated dependencies:
+-- Our analysis shows that the FoodGo tables are largely
+-- organized according to 3NF.
 --
--- customers:
---   customer_id -> name, phone, email
---   phone -> customer_id, name, email
+-- Customers, addresses, restaurants, menu items and other
+-- related information are stored separately to avoid
+-- unnecessary repetition.
 --
--- addresses:
---   address_id -> customer_id, line1, area, city, pincode
+-- One important case is the orders table:
+-- an order has a customer and an address, and the address
+-- already belongs to that customer.
 --
--- restaurants:
---   restaurant_id -> name, cuisine, city, is_active
+-- So, if we strictly follow this business rule, customer
+-- information can be obtained through the address, creating
+-- a transitive dependency in the original orders table.
 --
--- menu_items:
---   item_id -> restaurant_id, name, price, is_veg
+-- We demonstrate how this could be separated and reconstructed,
+-- but we do not change the actual FoodGo database.
 --
--- delivery_partners:
---   partner_id -> name, phone, vehicle_type
---   phone -> partner_id, name, vehicle_type
---
--- order_items:
---   (order_id, item_id) -> quantity, unit_price
---
--- deliveries:
---   delivery_id -> order_id, partner_id,
---                  pickup_time, delivered_time
---   order_id -> delivery_id, partner_id,
---               pickup_time, delivered_time
---
--- payments:
---   payment_id -> order_id, amount, method, status
---   order_id -> payment_id, amount, method, status
---
--- reviews:
---   review_id -> order_id, restaurant_rating,
---                delivery_rating, comment
---   order_id -> review_id, restaurant_rating,
---               delivery_rating, comment
---
--- These nine relations satisfy 3NF under those dependencies.
---
--- orders:
---   order_id -> customer_id, restaurant_id, address_id,
---               order_time, status, total_amount
---
--- IF order customer must equal the address owner:
---   address_id -> customer_id also holds by business meaning.
---
--- Because address_id is not an orders superkey and customer_id
--- is non-prime, the original orders relation is not strict 3NF
--- under that rule.
---
--- We demonstrated the normalized projection and reconstruction,
--- but deliberately preserved the original physical schema.
---
--- A future approved change could omit orders.customer_id and
--- derive it through addresses, provided address ownership is
--- immutable. Existing queries and application code would then
--- require review and testing.
---
--- END 
+-- END
 -- ============================================================
