@@ -1,4 +1,4 @@
-FoodGo --- Restaurant, Order & Delivery Management System
+##FoodGo --- Restaurant, Order & Delivery Management System
 
 Team 5 | DBMS Course Project
 
