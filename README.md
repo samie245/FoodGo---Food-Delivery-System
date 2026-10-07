@@ -10,7 +10,7 @@ Normalization note: The project includes a dedicated, read-only normalization.sq
 
 | S.No. | Student Name | USN | Contributions |
 |---:|---|---|----|
-| 1 | Rehaan Saha | AU25UG-046 | Contributions for ER-Diagram and Documentation part |
+| 1 | Rehaan Saha | AU25UG-046 | Contributions for Documentation part and Scehema |
 | 2 | S Thanmayee | AU25UG-049 | Documentation |
 | 3 | Samhita Bhuvanagiri | AU25UG-050 | Schema, Table creation, constraints, Indexing |
 | 4 | Sarang Siva Thilakan | AU25UG-054 | Queries |
