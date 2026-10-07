@@ -8,14 +8,14 @@ Normalization note: The project includes a dedicated, read-only normalization.sq
 
 ### Team Members
 
-| S.No. | Student Name | USN |
-|---:|---|---|
-| 1 | Rehaan Saha | AU25UG-046 |
-| 2 | S Thanmayee | AU25UG-049 |
-| 3 | Samhita Bhuvanagiri | AU25UG-050 |
-| 4 | Sarang Siva Thilakan | AU25UG-054 |
-| 5 | Shahiba Arshiya Banu | AU25UG-055 |
-| 6 | Supriya R | AU25UG-058 |
+| S.No. | Student Name | USN | Contributions |
+|---:|---|---|----|
+| 1 | Rehaan Saha | AU25UG-046 |  | Contributions for ER-Diagram and Documentation part |
+| 2 | S Thanmayee | AU25UG-049 | Documentation |
+| 3 | Samhita Bhuvanagiri | AU25UG-050 | Schema, Table creation, constraints, Indexing |
+| 4 | Sarang Siva Thilakan | AU25UG-054 | Queries |
+| 5 | Shahiba Arshiya Banu | AU25UG-055 | ER-Diagram |
+| 6 | Supriya R | AU25UG-058 | Normalization |
 
 ### 1. Project Overview
 
