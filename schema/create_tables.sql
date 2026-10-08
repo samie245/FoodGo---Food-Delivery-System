@@ -27,9 +27,10 @@
 --         from order_items, so without this it could silently
 --         drift out of sync if line items changed after the
 --         order was placed.
---      Verified against the team's existing insert_tables.sql,
---      queries.sql and normalization_validation.sql -- all run
---      unmodified with identical results.
+-- v3 - GPS columns added to delivery_partners
+-- Verified against the team's existing insert_tables.sql,
+-- queries.sql and normalization_validation.sql -- all run
+-- unmodified with identical results.
 -- ============================================================
 
 DROP DATABASE IF EXISTS foodgo;
@@ -101,14 +102,24 @@ CREATE TABLE menu_items (
 
 -- ------------------------------------------------------------
 -- 5. delivery_partners
+--    v3: added live GPS location (latest known position)
 -- ------------------------------------------------------------
 CREATE TABLE delivery_partners (
-    partner_id      INT AUTO_INCREMENT PRIMARY KEY,
-    name            VARCHAR(100) NOT NULL,
-    phone           VARCHAR(15)  NOT NULL,
-    vehicle_type    ENUM('bike','scooter','bicycle','car') NOT NULL,
+    partner_id            INT AUTO_INCREMENT PRIMARY KEY,
+    name                  VARCHAR(100) NOT NULL,
+    phone                 VARCHAR(15)  NOT NULL,
+    vehicle_type          ENUM('bike','scooter','bicycle','car') NOT NULL,
+    current_latitude      DECIMAL(9,6) NULL,
+    current_longitude     DECIMAL(9,6) NULL,
+    last_location_update  DATETIME     NULL,
     CONSTRAINT uq_partners_phone UNIQUE (phone),
-    CONSTRAINT chk_partners_phone_format CHECK (phone REGEXP '^[0-9]{10}$')
+    CONSTRAINT chk_partners_phone_format CHECK (phone REGEXP '^[0-9]{10}$'),
+    CONSTRAINT chk_partners_latitude  CHECK (current_latitude  BETWEEN -90  AND 90),
+    CONSTRAINT chk_partners_longitude CHECK (current_longitude BETWEEN -180 AND 180),
+    CONSTRAINT chk_partners_gps_pair CHECK (
+        (current_latitude IS NULL AND current_longitude IS NULL)
+        OR (current_latitude IS NOT NULL AND current_longitude IS NOT NULL)
+    )
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------
